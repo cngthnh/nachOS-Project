@@ -36,6 +36,8 @@
 #define SC_ThreadJoin   15
 #define SC_ReadNum 16
 #define SC_PrintNum 17
+#define SC_ReadString 18
+#define SC_PrintString 19
 
 #define SC_Add		42
 
@@ -63,6 +65,9 @@ int ReadNum();
 
 void PrintNum(int num);
 
+void ReadString(char* buffer, int len);
+
+void PrintString(char* buffer);
 
 int Add(int op1, int op2);
 
