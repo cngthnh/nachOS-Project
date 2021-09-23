@@ -10,6 +10,6 @@ echo "Building programs in NachOS-4.0/code/test"
 make >/dev/null 2>&1
 echo "Executing $1"
 echo "-------------------------------------------"
-../build.linux/nachos -x "$1"
+../build.linux/nachos -f -cp "$1" "$1" -x "$1"
 
 

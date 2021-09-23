@@ -25,6 +25,8 @@
 #include "main.h"
 #include "syscall.h"
 #include "ksyscall.h"
+#include "synchconsole.h"
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -48,10 +50,72 @@
 //	is in machine.h.
 //----------------------------------------------------------------------
 
+// Define some constants
+#define FILENAME_MAX_LENGTH 32 //bytes
+#define ARG_1 4
+#define ARG_2 5
+#define ARG_3 6
+#define ARG_4 7
+#define SYSCALL_CODE 2
+#define OUTPUT_REG 2
+
+// returns system memory buffer
+char* User2System(int virtualAddress, int limit)
+{
+	int byte = 0;
+	char* kernelBuffer = NULL;
+
+	kernelBuffer = new char[limit+1]; // null-terminated string
+	if (kernelBuffer==NULL)
+		return kernelBuffer;
+
+	// set all bits in the buffer to 0
+	memset(kernelBuffer, 0, limit+1);
+
+	for (int i=0; i<limit; ++i)
+	{
+		// read i-th byte
+		kernel->machine->ReadMem(virtualAddress+i, 1, &byte);
+		kernelBuffer[i] = (char)byte;
+		if (byte == 0)
+			break;
+	}
+
+	return kernelBuffer;
+}
+
+// returns the number of bytes copied
+int System2User(int virtualAddress, int len, char* buffer)
+{
+	if (len < 0) return -1;
+	if (len == 0) return len;
+	int byte = 0;
+	int i = 0;
+
+	for (; i < len; ++i)
+	{
+		byte = (int) buffer[i];
+		kernel->machine->WriteMem(virtualAddress+i, 1, byte);
+		if (byte == 0)
+			break;
+	}
+
+	return i;
+}
+
+void IncreasePC()
+{
+	// increase next PC
+	int nextPC = kernel->machine->ReadRegister(NextPCReg) + 4;
+	kernel->machine->WriteRegister(PrevPCReg, kernel->machine-> ReadRegister(PCReg));
+	kernel->machine->WriteRegister(PCReg, kernel->machine-> ReadRegister(NextPCReg));
+	kernel->machine->WriteRegister(NextPCReg, nextPC);
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
-	int type = kernel->machine->ReadRegister(2);
+	int type = kernel->machine->ReadRegister(SYSCALL_CODE);
 
     DEBUG(dbgSys, "Received Exception " << which << " type: " << type << "\n");
 
@@ -62,45 +126,161 @@ ExceptionHandler(ExceptionType which)
 		switch(type) 
 		{
 		case SC_Halt:
+		{
 			DEBUG(dbgSys, "Shutdown, initiated by user program.\n");
 			printf("\nShutdown, initiated by user program.\n");
 			SysHalt();
 
 			ASSERTNOTREACHED();
 			break;
+		}
+
+		case SC_Exit:
+		{
+			// needs definition
+			IncreasePC();
+			break;
+		}
 
 		case SC_Add:
-			DEBUG(dbgSys, "Add " << kernel->machine->ReadRegister(4) << " + " << kernel->machine->ReadRegister(5) << "\n");
+		{
+			DEBUG(dbgSys, "Add " << kernel->machine->ReadRegister(ARG_1) << " + " << kernel->machine->ReadRegister(ARG_2) << "\n");
 			
 			/* Process SysAdd Systemcall*/
 			int result;
-			result = SysAdd(/* int op1 */(int)kernel->machine->ReadRegister(4),
-					/* int op2 */(int)kernel->machine->ReadRegister(5));
+			result = SysAdd(/* int op1 */(int)kernel->machine->ReadRegister(ARG_1),
+					/* int op2 */(int)kernel->machine->ReadRegister(ARG_2));
 
 			DEBUG(dbgSys, "Add returning with " << result << "\n");
 			/* Prepare Result */
-			kernel->machine->WriteRegister(2, (int)result);
-			
-			/* Modify return point */
-			{
-			/* set previous programm counter (debugging only)*/
-			kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+			kernel->machine->WriteRegister(OUTPUT_REG, (int)result);
 
-			/* set programm counter to next instruction (all Instructions are 4 byte wide)*/
-			kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+			IncreasePC();
+			break;
+		}
+
+		case SC_Create:
+		{
+			int virtualAddress;
 			
-			/* set next programm counter for brach execution */
-			kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg)+4);
+			char* filename;
+
+			DEBUG(dbgFile, "Called SC_Create\n");
+			DEBUG(dbgFile, "Reading virtual address of filename\n");
+			
+			virtualAddress = kernel->machine->ReadRegister(ARG_1);
+			
+			DEBUG(dbgFile, "Copying filename to system memory space\n");
+			
+			filename = User2System(virtualAddress, FILENAME_MAX_LENGTH+1);
+			
+			if (filename==NULL)
+			{
+				printf("\nInsufficient system memory\n");
+				DEBUG(dbgAddr, "Insufficient system memory\n");
+				kernel->machine->WriteRegister(OUTPUT_REG,-1);
+				delete[] filename;
+				return;
+			}
+			DEBUG(dbgFile, "Filename read successfully");
+			if (!kernel->fileSystem->Create(filename, 0))
+			{
+				printf("\nUnexpected error while creating file: %s", filename);
+				kernel->machine->WriteRegister(OUTPUT_REG,-1);
+				delete[] filename;
+				return;
 			}
 
-			return;
-			
-			ASSERTNOTREACHED();
+			DEBUG(dbgFile, "File created successfully\n");
+			printf("\nCreated successfully: %s\n", filename);
+			kernel->machine->WriteRegister(OUTPUT_REG,0);
+			delete[] filename;
 
+			IncreasePC();
 			break;
+		}
+
+		case SC_ReadNum:
+		{
+			int number = 0;
+			char digit;
+			char* numString = new char[12]; // Number with max characters: -2147483648, null-terminated
+			int idx = 0;
+			do
+			{
+				digit = kernel->synchConsoleIn->GetChar();
+				if (digit=='\n') 
+				{
+					numString[idx]='\0';
+					break;
+				}
+				numString[idx] = digit;
+				idx++;
+			} while (1);
+
+			int i;
+			if (numString[0]=='-') 
+				i = 1;
+			else 
+				i = 0;
+
+			for (; i < idx; ++i)
+			{
+				number *= 10;
+				number += int(numString[i])-48;
+			}
+
+			if (numString[0]=='-')
+				kernel->machine->WriteRegister(OUTPUT_REG, -number);
+			else
+				kernel->machine->WriteRegister(OUTPUT_REG, number);
+
+			IncreasePC();
+			break;
+		}
+
+		case SC_PrintNum:
+		{
+			bool isNegative = false;
+			int number = kernel->machine->ReadRegister(ARG_1);
+			if (number<0) 
+			{
+				isNegative = true;
+				number = abs(number);
+			}
+
+			if (isNegative)
+			{
+				kernel->synchConsoleOut->PutChar('-');
+			}
+
+			// create a stack to put the number in (int -> char array)
+			char* stack = new char[12]; // Number with max characters: -2147483648, null-terminated
+			memset(stack, 0, 12);
+
+			int idx = 12;
+
+			do
+			{
+				idx--;
+				stack[idx] = number % 10 + 48;
+				number/=10;
+			}
+			while (number != 0);
+
+			// print out digits in the stack
+			for (; idx<12; idx++)
+			{
+				kernel->synchConsoleOut->PutChar(stack[idx]);
+			}
+
+			IncreasePC();
+			break;
+		}
 
 		default:
 			cerr << "Unexpected system call " << type << "\n";
+			ASSERTNOTREACHED();
 			break;
 		}
 		break;
@@ -146,10 +326,13 @@ ExceptionHandler(ExceptionType which)
 		printf("\nNumExceptionTypes raised\n");
 		SysHalt();
 		break;
+
+	case NoException:
+		return;
+		break;
 	
     default:
 		cerr << "Unexpected user mode exception" << (int)which << "\n";
 		break;
     }
-    ASSERTNOTREACHED();
 }

@@ -2,6 +2,14 @@
     "files.associations": {
         "*.tcc": "cpp",
         "functional": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "iostream": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp"
     }
 }
