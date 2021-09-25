@@ -71,6 +71,34 @@ void Flush()
 	} while (byte!=0 && byte!='\n');
 }
 
+bool IntRangeCheck(char* number)
+{
+	char max_Int[INT_MAX_DIGIT] = "2147483647";
+	char min_Int[INT_MAX_DIGIT] = "-2147483648";
+	bool isNegative = false;
+	if (number[0]=='-') isNegative = true;
+	if (isNegative)
+	{
+		if (strlen(number)>strlen(min_Int))
+			return false;
+		if (strlen(number)<strlen(min_Int))
+			return true;
+		if (strcmp(number, min_Int)>0)
+			return false;
+		return true;
+	}
+	else
+	{
+		if (strlen(number)>strlen(max_Int))
+			return false;
+		if (strlen(number)<strlen(max_Int))
+			return true;
+		if (strcmp(number, max_Int)>0)
+			return false;
+		return true;
+	}
+}
+
 // returns system memory buffer
 char* User2System(int virtualAddress, int limit)
 {
@@ -126,8 +154,8 @@ void IncreasePC()
 
 void Syscall_Halt()
 {
+	DEBUG(dbgSys, "Called SC_Halt\n");
 	DEBUG(dbgSys, "Shutdown, initiated by user program.\n");
-	printf("\nShutdown, initiated by user program.\n");
 	SysHalt();
 
 	ASSERTNOTREACHED();
@@ -135,16 +163,21 @@ void Syscall_Halt()
 
 void Syscall_Add()
 {
+
+	DEBUG(dbgFile, "Called SC_Add\n");
+	DEBUG(dbgFile, "Reading virtual 2 args to be added\n");
+
+	int arg1 = kernel->machine->ReadRegister(ARG_1);
+	int arg2 = kernel->machine->ReadRegister(ARG_2);
+
 	DEBUG(dbgSys, "Add " << kernel->machine->ReadRegister(ARG_1) << " + " << kernel->machine->ReadRegister(ARG_2) << "\n");
 			
 	/* Process SysAdd Systemcall*/
-	int result;
-	result = SysAdd(/* int op1 */(int)kernel->machine->ReadRegister(ARG_1),
-			/* int op2 */(int)kernel->machine->ReadRegister(ARG_2));
+	int result = SysAdd(arg1, arg2);
 
 	DEBUG(dbgSys, "Add returning with " << result << "\n");
 	/* Prepare Result */
-	kernel->machine->WriteRegister(OUTPUT_REG, (int)result);
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
 }
 
 void Syscall_Create()
@@ -164,23 +197,21 @@ void Syscall_Create()
 	
 	if (filename==NULL)
 	{
-		printf("\nInsufficient system memory\n");
 		DEBUG(dbgAddr, "Insufficient system memory\n");
 		kernel->machine->WriteRegister(OUTPUT_REG,-1);
 		delete[] filename;
 		return;
 	}
-	DEBUG(dbgFile, "Filename read successfully");
+	DEBUG(dbgFile, "Filename read successfully\n");
 	if (!kernel->fileSystem->Create(filename, 0))
 	{
-		printf("\nUnexpected error while creating file: %s", filename);
+		DEBUG(dbgFile, "Unexpected error while creating file\n");
 		kernel->machine->WriteRegister(OUTPUT_REG,-1);
 		delete[] filename;
 		return;
 	}
 
 	DEBUG(dbgFile, "File created successfully\n");
-	printf("\nCreated successfully: %s\n", filename);
 	kernel->machine->WriteRegister(OUTPUT_REG,0);
 	delete[] filename;
 }
@@ -193,8 +224,7 @@ void Syscall_ReadNum()
 
 	if (numString == NULL)
 	{
-		DEBUG(dbgAddr, "\nInsufficient system memory");
-		printf("\nInsufficient system memory\n");
+		DEBUG(dbgAddr, "Insufficient system memory\n");
 		SysHalt();
 		return;
 	}
@@ -204,9 +234,17 @@ void Syscall_ReadNum()
 	{
 		digit = kernel->synchConsoleIn->GetChar();
 
-		if (digit=='\n' || digit<'0' || digit>'9') 
+		if (digit=='\n') 
 		{
 			numString[idx]='\0';
+			break;
+			
+		}
+
+		if ((digit<'0' || digit>'9') && digit!='-')
+		{
+			numString[idx]='\0';
+			Flush();
 			break;
 		}
 
@@ -215,13 +253,21 @@ void Syscall_ReadNum()
 		if (idx==INT_MAX_DIGIT)
 		{
 			Flush();
-			printf("\nInt: Out of range\n");
+			DEBUG(dbgOverflow, "Int: Out of range\n");
 			delete[] numString;
 			kernel->machine->WriteRegister(OUTPUT_REG, 0); // returns 0
 			return;
 		}
 	} while (idx<INT_MAX_DIGIT);
 
+	if (!IntRangeCheck(numString))
+	{
+		DEBUG(dbgOverflow, "Int: Out of range\n");
+		delete[] numString;
+		kernel->machine->WriteRegister(OUTPUT_REG, 0); // returns 0
+		return;
+	}
+	
 	int i;
 	if (numString[0]=='-') 
 		i = 1;
@@ -231,13 +277,13 @@ void Syscall_ReadNum()
 	for (; i < idx; ++i)
 	{
 		number *= 10;
-		number += int(numString[i])-48;
+		if (numString[0]=='-')
+			number -= int(numString[i])-48;
+		else
+			number += int(numString[i])-48;
 	}
-
-	if (numString[0]=='-')
-		kernel->machine->WriteRegister(OUTPUT_REG, -number);
-	else
-		kernel->machine->WriteRegister(OUTPUT_REG, number);
+	
+	kernel->machine->WriteRegister(OUTPUT_REG, number);
 
 	delete[] numString;
 
@@ -250,7 +296,6 @@ void Syscall_PrintNum()
 	if (number<0) 
 	{
 		isNegative = true;
-		number = abs(number);
 	}
 
 	if (isNegative)
@@ -263,8 +308,7 @@ void Syscall_PrintNum()
 
 	if (stack == NULL)
 	{
-		DEBUG(dbgAddr, "\nInsufficient system memory");
-		printf("\nInsufficient system memory\n");
+		DEBUG(dbgAddr, "Insufficient system memory\n");
 		SysHalt();
 		return;
 	}
@@ -275,7 +319,7 @@ void Syscall_PrintNum()
 
 	do
 	{
-		stack[--idx] = number % 10 + 48;
+		stack[--idx] = abs(number % 10) + 48;
 		number/=10;
 	}
 	while (number != 0);
@@ -298,8 +342,7 @@ void Syscall_PrintString()
 
 	if (buffer==NULL)
 	{
-		DEBUG(dbgAddr, "\nInsufficient system memory");
-		printf("\nInsufficient system memory\n");
+		DEBUG(dbgAddr, "Insufficient system memory\n");
 		SysHalt();
 		return;
 	}
