@@ -38,6 +38,8 @@
 #define SC_PrintNum 17
 #define SC_ReadString 18
 #define SC_PrintString 19
+#define SC_ReadChar 20
+#define SC_PrintChar 21
 
 #define SC_Add		42
 
@@ -68,6 +70,10 @@ void PrintNum(int num);
 void ReadString(char* buffer, int len);
 
 void PrintString(char* buffer);
+
+char ReadChar();
+
+void PrintChar(char character);
 
 int Add(int op1, int op2);
 

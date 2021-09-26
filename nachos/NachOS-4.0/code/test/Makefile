@@ -112,7 +112,7 @@ ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt shell matmult sort segments createFile inputTest
+PROGRAMS = add halt shell matmult builtinSort segments createFile inputTest ascii sort
 endif
 
 all: $(PROGRAMS)
@@ -168,6 +168,18 @@ inputTest.o: inputTest.c
 inputTest: inputTest.o start.o
 	$(LD) $(LDFLAGS) start.o inputTest.o -o inputTest.coff
 	$(COFF2NOFF) inputTest.coff inputTest
+
+builtinSort.o: builtinSort.c
+	$(CC) $(CFLAGS) -c builtinSort.c
+builtinSort: builtinSort.o start.o
+	$(LD) $(LDFLAGS) start.o builtinSort.o -o builtinSort.coff
+	$(COFF2NOFF) builtinSort.coff builtinSort
+
+ascii.o: ascii.c
+	$(CC) $(CFLAGS) -c ascii.c
+ascii: ascii.o start.o
+	$(LD) $(LDFLAGS) start.o ascii.o -o ascii.coff
+	$(COFF2NOFF) ascii.coff ascii
 
 clean:
 	$(RM) -f *.o *.ii

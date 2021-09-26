@@ -11,7 +11,6 @@ function usage {
 
 isVerboseMode=false
 filename=""
-debugFlags=" -d"
 
 while getopts ":vf:d:" o; do
     case "${o}" in
@@ -22,7 +21,10 @@ while getopts ":vf:d:" o; do
 		filename=${OPTARG}
 		;;
 	d)
-		debugFlags="$debugFlags ${OPTARG}"
+		debugFlags=" -d ${OPTARG}"
+		;;
+	u)
+		usage
 		;;
         *)
             	usage

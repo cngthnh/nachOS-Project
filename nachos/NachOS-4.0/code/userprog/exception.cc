@@ -167,6 +167,7 @@ void Syscall_Add()
 	DEBUG(dbgFile, "Called SC_Add\n");
 	DEBUG(dbgFile, "Reading virtual 2 args to be added\n");
 
+	// Read 2 numbers from register
 	int arg1 = kernel->machine->ReadRegister(ARG_1);
 	int arg2 = kernel->machine->ReadRegister(ARG_2);
 
@@ -189,10 +190,12 @@ void Syscall_Create()
 	DEBUG(dbgFile, "Called SC_Create\n");
 	DEBUG(dbgFile, "Reading virtual address of filename\n");
 	
+	// Get the address of the char array containing the file name
 	virtualAddress = kernel->machine->ReadRegister(ARG_1);
 	
 	DEBUG(dbgFile, "Copying filename to system memory space\n");
 	
+	// Copy the file name to the system space
 	filename = User2System(virtualAddress, FILENAME_MAX_LENGTH+1);
 	
 	if (filename==NULL)
@@ -230,10 +233,13 @@ void Syscall_ReadNum()
 	}
 	
 	int idx = 0;
+
+	// Read every single digit from console
 	do
 	{
 		digit = kernel->synchConsoleIn->GetChar();
 
+		// Terminate the string
 		if (digit=='\n') 
 		{
 			numString[idx]='\0';
@@ -241,6 +247,8 @@ void Syscall_ReadNum()
 			
 		}
 
+		// If not LF, digits, '-' 
+		// => Terminate the string and then flush
 		if ((digit<'0' || digit>'9') && digit!='-')
 		{
 			numString[idx]='\0';
@@ -260,6 +268,7 @@ void Syscall_ReadNum()
 		}
 	} while (idx<INT_MAX_DIGIT);
 
+	// Integer range check
 	if (!IntRangeCheck(numString))
 	{
 		DEBUG(dbgOverflow, "Int: Out of range\n");
@@ -269,11 +278,14 @@ void Syscall_ReadNum()
 	}
 	
 	int i;
+	// If the number is negative, we just get digits from index = 1
 	if (numString[0]=='-') 
 		i = 1;
 	else 
 		i = 0;
 
+	// Positive => add
+	// Negative => sub
 	for (; i < idx; ++i)
 	{
 		number *= 10;
@@ -291,6 +303,7 @@ void Syscall_ReadNum()
 
 void Syscall_PrintNum()
 {
+	// Read the number from register
 	bool isNegative = false;
 	int number = kernel->machine->ReadRegister(ARG_1);
 	if (number<0) 
@@ -317,6 +330,7 @@ void Syscall_PrintNum()
 
 	int idx = INT_MAX_DIGIT;
 
+	// Put digits into the stack so that it can be printed out in the right order
 	do
 	{
 		stack[--idx] = abs(number % 10) + 48;
@@ -335,9 +349,10 @@ void Syscall_PrintNum()
 
 void Syscall_PrintString()
 {
+	// Load char array address from register
 	int address = kernel->machine->ReadRegister(ARG_1);
 
-	//copy from user space to system space
+	// copy char array from user space to system space
 	char* buffer = User2System(address, BUFFER_MAX_LENGTH);
 
 	if (buffer==NULL)
@@ -360,15 +375,18 @@ void Syscall_PrintString()
 
 void Syscall_ReadString()
 {
+	// Get char array address and array length from register
 	int address = kernel->machine->ReadRegister(ARG_1);
 	int len = kernel->machine->ReadRegister(ARG_2);
 	--len; // reserve the last byte for terminating the string
 
-	//system space buffer
+	// system space buffer
 	char *buffer = new char[len];
 	char key;
 
 	int i;
+
+	// Get chars from console and then append it to the buffer in the system space
 	for (i=0; i<len; ++i)
 	{
 		key = kernel->synchConsoleIn->GetChar();
@@ -382,12 +400,30 @@ void Syscall_ReadString()
 
 	if (i==len) 
 	{
+		// Reach the end of string => Terminate the string and then flush remaining characters
 		buffer[i]=0;
 		Flush();
 	}
 
 	System2User(address, i, buffer);
 	delete[] buffer;
+}
+
+void Syscall_ReadChar()
+{
+	// Read a single char from the console
+	// Flush all other characters because we just need 1 char
+	char key = kernel->synchConsoleIn->GetChar();
+	Flush();
+	kernel->machine->WriteRegister(OUTPUT_REG, key);
+}
+
+void Syscall_PrintChar()
+{
+	// Get the char from register
+	// Print it to the console
+	char key = kernel->machine->ReadRegister(ARG_1);
+	kernel->synchConsoleOut->PutChar(key);
 }
 
 void
@@ -454,6 +490,20 @@ ExceptionHandler(ExceptionType which)
 		case SC_ReadString:
 		{
 			Syscall_ReadString();
+			IncreasePC();
+			break;
+		}
+
+		case SC_ReadChar:
+		{
+			Syscall_ReadChar();
+			IncreasePC();
+			break;
+		}
+
+		case SC_PrintChar:
+		{
+			Syscall_PrintChar();
 			IncreasePC();
 			break;
 		}
