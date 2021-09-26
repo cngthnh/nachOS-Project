@@ -34,6 +34,12 @@
 #define SC_ExecV	13
 #define SC_ThreadExit   14
 #define SC_ThreadJoin   15
+#define SC_ReadNum 16
+#define SC_PrintNum 17
+#define SC_ReadString 18
+#define SC_PrintString 19
+#define SC_ReadChar 20
+#define SC_PrintChar 21
 
 #define SC_Add		42
 
@@ -56,6 +62,18 @@ void Halt();
 /*
  * Add the two operants and return the result
  */ 
+
+int ReadNum();
+
+void PrintNum(int num);
+
+void ReadString(char* buffer, int len);
+
+void PrintString(char* buffer);
+
+char ReadChar();
+
+void PrintChar(char character);
 
 int Add(int op1, int op2);
 
@@ -105,8 +123,8 @@ typedef int OpenFileId;
  * the console device.
  */
 
-#define ConsoleInput	0  
-#define ConsoleOutput	1  
+#define CONSOLE_INPUT	0  
+#define CONSOLE_OUTPUT	1  
  
 /* Create a Nachos file, with name "name" */
 /* Note: Create does not open the file.   */
