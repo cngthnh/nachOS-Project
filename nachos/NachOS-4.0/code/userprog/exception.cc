@@ -26,6 +26,8 @@
 #include "syscall.h"
 #include "ksyscall.h"
 #include "synchconsole.h"
+#include <time.h>
+#include <stdlib.h>
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -54,6 +56,7 @@
 #define BUFFER_MAX_LENGTH 255 //bytes
 #define FILENAME_MAX_LENGTH 32 //bytes
 #define INT_MAX_DIGIT 12 // Number with max characters: -2147483648, null-terminated
+#define RAND_MAX 10000 // Max random number
 #define ARG_1 4
 #define ARG_2 5
 #define ARG_3 6
@@ -426,6 +429,13 @@ void Syscall_PrintChar()
 	kernel->synchConsoleOut->PutChar(key);
 }
 
+void Syscall_RandomNum()
+{
+	srand(time(NULL));
+	int num = (rand()%RAND_MAX)+1; //Random positive number
+	kernel->machine->WriteRegister(OUTPUT_REG, num); 
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
@@ -504,6 +514,13 @@ ExceptionHandler(ExceptionType which)
 		case SC_PrintChar:
 		{
 			Syscall_PrintChar();
+			IncreasePC();
+			break;
+		}
+
+		case SC_RandomNum:
+		{
+			Syscall_RandomNum();
 			IncreasePC();
 			break;
 		}
