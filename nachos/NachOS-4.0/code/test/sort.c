@@ -56,5 +56,5 @@ int main()
 		PrintChar(' ');
 	}
 	PrintChar(' ');
-	return 0;
+	Halt();
 }

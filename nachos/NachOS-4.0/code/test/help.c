@@ -13,5 +13,5 @@ int main()
 	PrintString("giam dan tuy theo yeu cau cua nguoi dung. Thuan toan duoc dung la\n");
 	PrintString("bubble sort. Nguoi dung su dung bang cach nhap n (so phan tu) roi\n");
 	PrintString("lan luot nhap vao cac phan tu. Chuong trinh se in ra mang da sap xep.");
-	return 0;
+	Halt();
 }

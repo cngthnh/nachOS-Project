@@ -3,7 +3,7 @@ int main()
 {
 	int a;
 	a = RandomNum();
-	PrintString("Positive Number random is: ");
+	PrintString("So nguyen duong ngau nhien la: ");
 	PrintNum(a);
-	return 0;
+	Halt();
 }

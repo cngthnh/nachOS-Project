@@ -10,5 +10,5 @@ int main()
 		PrintChar(i);
 		PrintChar('\n');
 	}
-	return 0;
+	Halt();
 }
