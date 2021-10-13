@@ -7,10 +7,16 @@ int main()
 	int a[100];
 	PrintString("Nhap so luong phan tu cua mang can sap xep: ");
 	n = ReadNum();
+	while (n > 100 || n < 0)
+	{
+		PrintString("So luong phan tu khong hop le, nhap lai so luong phan tu cua mang can sap xep: (0 <= n <= 100) ");
+		n = ReadNum();
+	} 
+	
 	PrintString("Nhap chieu sap xep (0: tu nho den lon; 1: tu lon den nho): ");
 	direction = ReadChar();
 
-	for (i=0; i<n; ++i)
+	for (i = 0; i < n; ++i)
 	{
 		PrintString("A[");
 		PrintNum(i);
@@ -56,5 +62,5 @@ int main()
 		PrintChar(' ');
 	}
 	PrintChar(' ');
-	return 0;
+	Halt();
 }

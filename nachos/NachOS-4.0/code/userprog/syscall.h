@@ -40,6 +40,7 @@
 #define SC_PrintString 19
 #define SC_ReadChar 20
 #define SC_PrintChar 21
+#define SC_RandomNum 22
 
 #define SC_Add		42
 
@@ -74,6 +75,8 @@ void PrintString(char* buffer);
 char ReadChar();
 
 void PrintChar(char character);
+
+int RandomNum();
 
 int Add(int op1, int op2);
 

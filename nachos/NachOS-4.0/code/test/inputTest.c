@@ -13,5 +13,5 @@ int main()
 	PrintString("String = \"");
 	PrintString(buffer);
 	PrintString("\"");
-	return 0;
+	Halt();
 }

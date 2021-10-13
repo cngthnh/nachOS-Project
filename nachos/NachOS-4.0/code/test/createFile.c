@@ -3,5 +3,5 @@
 int main()
 {
 	int result = Create("testfile");
-	return 0;
+	Halt();
 }

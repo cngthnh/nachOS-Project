@@ -26,6 +26,7 @@
 #include "syscall.h"
 #include "ksyscall.h"
 #include "synchconsole.h"
+#include "sysdep.h"
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -426,6 +427,13 @@ void Syscall_PrintChar()
 	kernel->synchConsoleOut->PutChar(key);
 }
 
+void Syscall_RandomNum()
+{
+	RandomInit(time(NULL));
+	int num = (RandomNumber()%(INT_MAX-1))+1; //Random positive number
+	kernel->machine->WriteRegister(OUTPUT_REG, num); 
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
@@ -504,6 +512,13 @@ ExceptionHandler(ExceptionType which)
 		case SC_PrintChar:
 		{
 			Syscall_PrintChar();
+			IncreasePC();
+			break;
+		}
+
+		case SC_RandomNum:
+		{
+			Syscall_RandomNum();
 			IncreasePC();
 			break;
 		}
