@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd "$(dirname "$0")"
 
 function usage {
     	echo "usage: $0 [-f program-file] [-d debug-flags] [-v]"
