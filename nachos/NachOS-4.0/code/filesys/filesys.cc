@@ -140,6 +140,60 @@ FileSystem::FileSystem(bool format)
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
     }
+
+    openingFile = new OpenFile*[15];
+
+    for (int i=0; i<10; ++i)
+    {
+        openingFile[i] = NULL;
+    }
+    this->Create("stdin", 0);
+    this->Create("stdout", 0);
+    openingFile[0] = this->Open("stdin");
+    openingFile[1] = this->Open("stdout");
+}
+
+FileSystem::~FileSystem() 
+{
+    for (int i=0; i<10; ++i)
+    {
+        if (openingFile[i]!=NULL)
+            delete openingFile[i];
+    }
+    delete[] openingFile;
+}
+
+int FileSystem::GetFileSpace()
+{
+    // Position 0 and 1 are reserved for stdin and stdout
+    for (int i=2; i<10; ++i)
+    {
+        if (openingFile[i]==NULL)
+            return i;
+    }
+    return -1;
+}
+
+bool FileSystem::FreeUpFileSpace(int index)
+{
+    if (openingFile[index] != NULL)
+    {
+        delete openingFile[index];
+        openingFile[index] = NULL;
+        return true;
+    }
+    return false;
+}
+
+OpenFile* FileSystem::AssignFileSpace(int index, char* filename, int fileType)
+{
+    // If still available
+    if (openingFile[index] == NULL)
+    {
+        openingFile[index] = Open(filename, fileType);
+        return openingFile[index];
+    }
+    return NULL;
 }
 
 //----------------------------------------------------------------------
@@ -230,11 +284,27 @@ FileSystem::Open(char *name)
     OpenFile *openFile = NULL;
     int sector;
 
-    DEBUG(dbgFile, "Opening file" << name);
+    DEBUG(dbgFile, "Opening file: " << name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
     if (sector >= 0) 		
 	openFile = new OpenFile(sector);	// name was found in directory 
+    delete directory;
+    return openFile;				// return NULL if not found
+}
+
+OpenFile *
+FileSystem::Open(char *name, int fileType)
+{ 
+    Directory *directory = new Directory(NumDirEntries);
+    OpenFile *openFile = NULL;
+    int sector;
+
+    DEBUG(dbgFile, "Opening file: " << name);
+    directory->FetchFrom(directoryFile);
+    sector = directory->Find(name); 
+    if (sector >= 0) 		
+	openFile = new OpenFile(sector, fileType);	// name was found in directory 
     delete directory;
     return openFile;				// return NULL if not found
 }

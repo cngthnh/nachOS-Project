@@ -22,7 +22,7 @@
 #define SC_Exit		1
 #define SC_Exec		2
 #define SC_Join		3
-#define SC_Create	4
+#define SC_CreateFile	4
 #define SC_Remove       5
 #define SC_Open		6
 #define SC_Read		7
@@ -131,8 +131,8 @@ typedef int OpenFileId;
  
 /* Create a Nachos file, with name "name" */
 /* Note: Create does not open the file.   */
-/* Return 1 on success, negative error code on failure */
-int Create(char *name);
+/* Return 0 on success, negative error code on failure */
+OpenFileId CreateFile(char *name);
 
 /* Remove a Nachos file, with name "name" */
 int Remove(char *name);
@@ -162,7 +162,7 @@ int Read(char *buffer, int size, OpenFileId id);
 int Seek(int position, OpenFileId id);
 
 /* Close the file, we're done reading and writing to it.
- * Return 1 on success, negative error code on failure
+ * Return 0 on success, negative error code on failure
  */
 int Close(OpenFileId id);
 

@@ -31,6 +31,15 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+    fileType = 0;
+}
+
+OpenFile::OpenFile(int sector, int fileType)
+{
+    hdr = new FileHeader;
+    hdr->FetchFrom(sector);
+    seekPosition = 0;
+    this->fileType = fileType;
 }
 
 //----------------------------------------------------------------------

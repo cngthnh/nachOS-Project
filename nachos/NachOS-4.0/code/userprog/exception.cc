@@ -27,6 +27,7 @@
 #include "ksyscall.h"
 #include "synchconsole.h"
 #include "sysdep.h"
+#include <limits.h>
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -182,13 +183,12 @@ void Syscall_Add()
 	kernel->machine->WriteRegister(OUTPUT_REG, result);
 }
 
-void Syscall_Create()
+void Syscall_CreateFile()
 {
 	int virtualAddress;
 			
 	char* filename;
 
-	DEBUG(dbgFile, "Called SC_Create\n");
 	DEBUG(dbgFile, "Reading virtual address of filename\n");
 	
 	// Get the address of the char array containing the file name
@@ -202,6 +202,11 @@ void Syscall_Create()
 	if (filename==NULL)
 	{
 		DEBUG(dbgAddr, "Insufficient system memory\n");
+		kernel->machine->WriteRegister(OUTPUT_REG,-1);
+		return;
+	} else if (strlen(filename) < 1) 
+	{
+		DEBUG(dbgFile, "Invalid filename!\n");
 		kernel->machine->WriteRegister(OUTPUT_REG,-1);
 		delete[] filename;
 		return;
@@ -434,6 +439,86 @@ void Syscall_RandomNum()
 	kernel->machine->WriteRegister(OUTPUT_REG, num); 
 }
 
+void Syscall_Open()
+{
+	// Read virtual address of filename
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	int fileType = kernel->machine->ReadRegister(ARG_2);
+
+	char* filename;
+
+	DEBUG(dbgFile, "Reading virtual address of filename\n");
+	
+	// Get the address of the char array containing the file name
+	virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	
+	DEBUG(dbgFile, "Copying filename to system memory space\n");
+	
+	// Copy the file name to the system space
+	filename = User2System(virtualAddress, FILENAME_MAX_LENGTH+1);
+	
+	if (filename==NULL)
+	{
+		DEBUG(dbgAddr, "Insufficient system memory\n");
+		kernel->machine->WriteRegister(OUTPUT_REG,-1);
+		return;
+	} else if (strlen(filename) < 1) 
+	{
+		DEBUG(dbgFile, "Invalid filename!\n");
+		kernel->machine->WriteRegister(OUTPUT_REG,-1);
+		delete[] filename;
+		return;
+	}
+
+	int fileSpace = kernel->fileSystem->GetFileSpace();
+	
+	if (fileSpace == -1) 
+	{
+		DEBUG(dbgFile, "Can't find a space to open the file\n");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		delete[] filename;
+		return;
+	}
+
+	switch (fileType)
+	{
+		// 0: read and write, 1: read-only
+		case 0:
+		case 1:
+		{
+			if (kernel->fileSystem->AssignFileSpace(fileSpace, filename, fileType) != NULL) 
+			{
+				DEBUG(dbgFile, "File opened successfully!\n");
+				kernel->machine->WriteRegister(OUTPUT_REG, fileSpace);
+			}
+			break;
+		}
+		default:
+		{
+			DEBUG(dbgFile, "Invalid file type\n");
+			kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		}
+	}
+	delete[] filename;
+}
+
+void Syscall_Close()
+{
+	OpenFileId fileId = kernel->machine->ReadRegister(ARG_1);
+	if (fileId >= 0 && fileId < 10)
+	{
+		// If the file is already opened
+		if (kernel->fileSystem->FreeUpFileSpace(fileId) != NULL)
+		{
+			kernel->machine->WriteRegister(OUTPUT_REG, 0);
+			DEBUG(dbgFile, "File closed successfully!\n");
+			return;
+		}
+	}
+	kernel->machine->WriteRegister(OUTPUT_REG, -1);
+	DEBUG(dbgFile, "Invalid File ID or the file hadn't been opened yet!\n");
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
@@ -463,13 +548,6 @@ ExceptionHandler(ExceptionType which)
 		case SC_Add:
 		{
 			Syscall_Add();
-			IncreasePC();
-			break;
-		}
-
-		case SC_Create:
-		{
-			Syscall_Create();
 			IncreasePC();
 			break;
 		}
@@ -519,6 +597,27 @@ ExceptionHandler(ExceptionType which)
 		case SC_RandomNum:
 		{
 			Syscall_RandomNum();
+			IncreasePC();
+			break;
+		}
+
+		case SC_CreateFile:
+		{
+			Syscall_CreateFile();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Open:
+		{
+			Syscall_Open();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Close:
+		{
+			Syscall_Close();
 			IncreasePC();
 			break;
 		}

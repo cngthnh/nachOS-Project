@@ -78,13 +78,26 @@ class FileSystem {
 
     OpenFile* Open(char *name); 	// Open a file (UNIX open)
 
+	OpenFile* Open(char *name, int fileType);
+
     bool Remove(char *name);  		// Delete a file (UNIX unlink)
 
     void List();			// List all the files in the file system
 
     void Print();			// List all the files and their contents
 
+	~FileSystem();
+
+	int GetFileSpace();
+
+	OpenFile* AssignFileSpace(int index, char* filename, int fileType);
+
+	bool FreeUpFileSpace(int index);
+
   private:
+
+   OpenFile** openingFile;
+
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
    OpenFile* directoryFile;		// "Root" directory -- list of 
