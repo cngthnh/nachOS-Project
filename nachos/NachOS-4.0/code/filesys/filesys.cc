@@ -42,7 +42,8 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
-#ifndef FILESYS_STUB
+
+
 
 #include "copyright.h"
 #include "debug.h"
@@ -51,6 +52,8 @@
 #include "directory.h"
 #include "filehdr.h"
 #include "filesys.h"
+
+#ifndef FILESYS_STUB
 
 // Sectors containing the file headers for the bitmap of free sectors,
 // and the directory of files.  These file headers are placed in well-known 
@@ -140,61 +143,9 @@ FileSystem::FileSystem(bool format)
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
     }
-
-    openingFile = new OpenFile*[15];
-
-    for (int i=0; i<10; ++i)
-    {
-        openingFile[i] = NULL;
-    }
-    this->Create("stdin", 0);
-    this->Create("stdout", 0);
-    openingFile[0] = this->Open("stdin");
-    openingFile[1] = this->Open("stdout");
 }
 
-FileSystem::~FileSystem() 
-{
-    for (int i=0; i<10; ++i)
-    {
-        if (openingFile[i]!=NULL)
-            delete openingFile[i];
-    }
-    delete[] openingFile;
-}
 
-int FileSystem::GetFileSpace()
-{
-    // Position 0 and 1 are reserved for stdin and stdout
-    for (int i=2; i<10; ++i)
-    {
-        if (openingFile[i]==NULL)
-            return i;
-    }
-    return -1;
-}
-
-bool FileSystem::FreeUpFileSpace(int index)
-{
-    if (openingFile[index] != NULL)
-    {
-        delete openingFile[index];
-        openingFile[index] = NULL;
-        return true;
-    }
-    return false;
-}
-
-OpenFile* FileSystem::AssignFileSpace(int index, char* filename, int fileType)
-{
-    // If still available
-    if (openingFile[index] == NULL)
-    {
-        openingFile[index] = Open(filename, fileType);
-        return openingFile[index];
-    }
-    return NULL;
-}
 
 //----------------------------------------------------------------------
 // FileSystem::Create
@@ -289,22 +240,6 @@ FileSystem::Open(char *name)
     sector = directory->Find(name); 
     if (sector >= 0) 		
 	openFile = new OpenFile(sector);	// name was found in directory 
-    delete directory;
-    return openFile;				// return NULL if not found
-}
-
-OpenFile *
-FileSystem::Open(char *name, int fileType)
-{ 
-    Directory *directory = new Directory(NumDirEntries);
-    OpenFile *openFile = NULL;
-    int sector;
-
-    DEBUG(dbgFile, "Opening file: " << name);
-    directory->FetchFrom(directoryFile);
-    sector = directory->Find(name); 
-    if (sector >= 0) 		
-	openFile = new OpenFile(sector, fileType);	// name was found in directory 
     delete directory;
     return openFile;				// return NULL if not found
 }
@@ -406,5 +341,92 @@ FileSystem::Print()
     delete freeMap;
     delete directory;
 } 
+#else
+
+    OpenFile* FileSystem::GetFileSpace(int index)
+    {
+        return openingFile[index];
+    }
+
+    bool FileSystem::FreeUpFileSpace(int index)
+    {
+        if (openingFile[index] != NULL)
+        {
+            delete openingFile[index];
+            openingFile[index] = NULL;
+            return true;
+        }
+        return false;
+    }
+
+    OpenFile* FileSystem::AssignFileSpace(int index, char* filename, int fileType)
+    {
+        // If still available
+        if (openingFile[index] == NULL)
+        {
+            openingFile[index] = Open(filename, fileType);
+            return openingFile[index];
+        }
+        return NULL;
+    }
+
+    FileSystem::~FileSystem() 
+    {
+        for (int i=0; i<MAX_FILE_NUM; ++i)
+        {
+            if (openingFile[i]!=NULL)
+                delete openingFile[i];
+        }
+        delete[] openingFile;
+    }
+
+    int FileSystem::GetFileSpace()
+    {
+        // Position 0 and 1 are reserved for stdin and stdout
+        for (int i=2; i<MAX_FILE_NUM; ++i)
+        {
+            if (openingFile[i]==NULL)
+                return i;
+        }
+        return -1;
+    }
+
+    OpenFile *
+    FileSystem::Open(char *name, int fileType)
+    { 
+        int fileDescriptor = OpenForReadWrite(name, FALSE);
+
+        if (fileDescriptor == -1) return NULL;
+        return new OpenFile(fileDescriptor, name, fileType);
+    }
+
+    FileSystem::FileSystem()
+    {
+        openingFile = new OpenFile*[MAX_FILE_NUM];
+
+        for (int i=0; i<MAX_FILE_NUM; ++i)
+        {
+            openingFile[i] = NULL;
+        }
+        this->Create("stdin");
+        this->Create("stdout");
+        openingFile[0] = this->Open("stdin", 0);
+        openingFile[1] = this->Open("stdout", 0);
+    }
+
+    OpenFile* FileSystem::GetFileSpace(char* filename)
+    {
+        for (int i=0; i<MAX_FILE_NUM; ++i)
+        {
+            if (openingFile[i] == NULL)
+                continue;
+            char* openName = openingFile[i]->GetFileName();
+            if (openName != NULL && strcmp(openName, filename) == 0)
+            {
+                return openingFile[i];
+            }
+        }
+        return NULL;
+    }
 
 #endif // FILESYS_STUB

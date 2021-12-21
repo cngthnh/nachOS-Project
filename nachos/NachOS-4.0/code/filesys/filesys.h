@@ -37,12 +37,14 @@
 #include "sysdep.h"
 #include "openfile.h"
 
+#define MAX_FILE_NUM 10
+
 #ifdef FILESYS_STUB 		// Temporarily implement file system calls as 
 				// calls to UNIX, until the real file system
 				// implementation is available
 class FileSystem {
   public:
-    FileSystem() {}
+    FileSystem();
 
     bool Create(char *name) {
 	int fileDescriptor = OpenForWrite(name);
@@ -59,7 +61,24 @@ class FileSystem {
 	  return new OpenFile(fileDescriptor);
       }
 
+	OpenFile* Open(char *name, int fileType);
+
     bool Remove(char *name) { return Unlink(name) == 0; }
+
+	int GetFileSpace();
+
+	OpenFile* GetFileSpace(int index);
+
+	OpenFile* GetFileSpace(char* filename);
+
+	OpenFile* AssignFileSpace(int index, char* filename, int fileType);
+
+	bool FreeUpFileSpace(int index);
+
+	~FileSystem();
+  
+  private:
+	OpenFile** openingFile;
 
 };
 
@@ -78,25 +97,13 @@ class FileSystem {
 
     OpenFile* Open(char *name); 	// Open a file (UNIX open)
 
-	OpenFile* Open(char *name, int fileType);
-
     bool Remove(char *name);  		// Delete a file (UNIX unlink)
 
     void List();			// List all the files in the file system
 
     void Print();			// List all the files and their contents
 
-	~FileSystem();
-
-	int GetFileSpace();
-
-	OpenFile* AssignFileSpace(int index, char* filename, int fileType);
-
-	bool FreeUpFileSpace(int index);
-
   private:
-
-   OpenFile** openingFile;
 
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file

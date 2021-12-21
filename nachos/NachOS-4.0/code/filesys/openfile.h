@@ -29,8 +29,11 @@
 					// See definitions listed under #else
 class OpenFile {
   public:
-    OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
-    ~OpenFile() { Close(file); }			// close the file
+    OpenFile(int f) { file = f; currentOffset = 0; fileName = NULL; }	// open the file
+
+	OpenFile(int f, char* fileName, int fileType);
+
+    ~OpenFile() { Close(file); if (fileName != NULL) delete[] fileName;}			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 
     		Lseek(file, position, 0); 
@@ -53,8 +56,14 @@ class OpenFile {
 		}
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
+
+	int GetFileType();
+
+	char* GetFileName();
     
   private:
+  	char* fileName;
+	int fileType; // 0: read and write, 1: read-only
     int file;
     int currentOffset;
 };
@@ -66,7 +75,6 @@ class OpenFile {
   public:
     OpenFile(int sector);		// Open a file whose header is located
 					// at "sector" on the disk
-	OpenFile(int sector, int fileType);
     ~OpenFile();			// Close the file
 
     void Seek(int position); 		// Set the position from which to 
@@ -86,10 +94,9 @@ class OpenFile {
     int Length(); 			// Return the number of bytes in the
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
-					// end of file, tell, lseek back 
-    
+					// end of file, tell, lseek back
+	
   private:
-	int fileType; // 0: read and write, 1: read-only
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file
 };
