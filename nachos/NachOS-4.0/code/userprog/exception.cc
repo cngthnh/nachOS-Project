@@ -20,6 +20,8 @@
 // Copyright (c) 1992-1996 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
+
+// needs to be removed later
 #define FILESYS_STUB
 #include "copyright.h"
 #include "main.h"
@@ -703,6 +705,39 @@ void Syscall_Write()
 	}
 }
 
+void Syscall_Exec()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	char *name = User2System(virtualAddress, FILENAME_MAX_LENGTH);
+
+	if (name == NULL) 
+	{
+		DEBUG(dbgAddr, "Insufficient memory space to load filename");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}
+
+	OpenFile *openFile = kernel->fileSystem->Open(name);
+	if (openFile == NULL) 
+	{
+		DEBUG(dbgFile, "File can't be opened");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}
+	delete openFile;
+
+	int pid = kernel->processTab->ExecUpdate(name);
+	delete[] name;
+	if (pid < 0)
+	{
+		DEBUG(dbgThread, "Can't start a new process");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}
+
+	kernel->machine->WriteRegister(OUTPUT_REG, pid);
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
@@ -816,6 +851,13 @@ ExceptionHandler(ExceptionType which)
 		case SC_Write:
 		{
 			Syscall_Write();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Exec:
+		{
+			Syscall_Exec();
 			IncreasePC();
 			break;
 		}

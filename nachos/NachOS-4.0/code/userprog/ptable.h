@@ -5,9 +5,11 @@
 #include "pcb.h"
 #include "semaphore.h" 
 #define MAXPROCESS 10
+#define MAX_PROCESS_NAME_LENGTH 32
+
 class PTable { 
 private: 
-    BitMap *bm; 
+    Bitmap *bm; 
     PCB *pcb[MAXPROCESS]; 
     int psize; 
     Semaphore *bmsem; // dùng để ngăn chặn trường hợp nạp 2 tiến trình cùng lúc.
@@ -18,7 +20,7 @@ public:
     ~PTable();
     //Hủy các đối tượng đã tạo.
 
-    int ExecUpdate(); //return PID
+    int ExecUpdate(char* fileName); //return PID
     //Thực thi cho system call SC_EXEC, kiểm tra chương trình được gọi có tồn tại trong máy không. Kiểm tra thử xem chương trình gọi lại chính nó không? Chúng ta không cho phép điều này. Kiểm tra còn slot trống để lưu tiến trình mới không (max là 10 process). Nếu thỏa các điều kiện trên thì ta lấy index của slot trống là processID cảu tiền trình mới tạo này, giả sử là ID. Và gọi phương thức EXEC của lớp PCB với đối tượng tương ứng quản lý process này, nghĩa là gọi pcb[ID]->Exec(…). Xem chi tiết mo tả trong lớp PCB ở bên dưới.
 
     int ExitUpdate(int ec);

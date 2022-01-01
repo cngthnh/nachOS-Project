@@ -9,7 +9,8 @@ private:
 	Semaphore *mutex; 
 	int exitcode; 
 	Thread *thread;
-	int numwait;// số tiến trình đã join 
+	int numwait;// số tiến trình đã join
+	char *fileName;
 public:
 	int parentID;//ID của tiến trình cha
 	PCB(int id);
@@ -26,5 +27,7 @@ public:
 	void DecNumWait(); 
 	void SetExitCode(int ec);
 	int GetExitCode();
+	void SetFileName(char* fileName);
+	char* GetFileName();
 };
 #endif

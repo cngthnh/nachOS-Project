@@ -352,7 +352,7 @@ AddrSpace::AddrSpace(char *filename)
     for (i = 0; i < numPages; i++)
     {
         pageTable[i].virtualPage = i; // for now, virtual page # = phys page #
-        pageTable[i].physicalPage = kernel->gPhysPageBitMap->Find();
+        pageTable[i].physicalPage = kernel->gPhysPageBitMap->FindAndSet();
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;

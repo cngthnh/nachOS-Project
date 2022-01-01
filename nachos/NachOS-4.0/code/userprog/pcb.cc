@@ -27,6 +27,10 @@ PCB::~PCB()
         thread->FreeSpace();
         thread->Finish();
     }
+    if (fileName != NULL)
+    {
+        delete[] fileName;
+    }
 }
 
 void StartProcess(void* id)
@@ -70,4 +74,15 @@ int PCB::Exec(char* filename, int id)
     mutex->V();
 	return id;
 
+}
+
+void PCB::SetFileName(char* fileName)
+{
+    this->fileName = new char[strlen(fileName)+1];
+    strcpy(this->fileName, fileName);
+}
+
+char* PCB::GetFileName()
+{
+    return fileName;
 }

@@ -60,7 +60,7 @@ class Kernel {
     PostOfficeInput *postOfficeIn;
     PostOfficeOutput *postOfficeOut;
     Semaphore *addrLock;
-    BitMap *gPhysPageBitMap;
+    Bitmap *gPhysPageBitMap;
     PTable *processTab;
     STable *semTab;
 
