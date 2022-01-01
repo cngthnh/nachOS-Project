@@ -80,6 +80,8 @@ class Thread {
     // THEY MUST be in this position for SWITCH to work.
     int *stackTop;			 // the current stack pointer
     void *machineState[MachineStateSize];  // all registers except for stackTop
+    int processID;
+    int exitStatus;
 
   public:
     Thread(char* debugName);		// initialize a Thread 
@@ -89,6 +91,11 @@ class Thread {
 					// is called
 
     // basic thread operations
+
+    void FreeSpace(){
+        if (space != 0)
+            delete space;
+    }
 
     void Fork(VoidFunctionPtr func, void *arg); 
     				// Make thread run (*func)(arg)
@@ -104,6 +111,10 @@ class Thread {
     char* getName() { return (name); }
     void Print() { cout << name; }
     void SelfTest();		// test whether thread impl is working
+    int GetProcessID();
+    void SetProcessID(int processId);
+    int GetExitStatus();
+    void SetExitStatus(int exitStatus);
 
   private:
     // some of the private data for this class is listed above
