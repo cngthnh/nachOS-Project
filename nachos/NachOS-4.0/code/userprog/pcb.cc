@@ -86,3 +86,47 @@ char* PCB::GetFileName()
 {
     return fileName;
 }
+
+void PCB::JoinWait()
+{
+    this->joinsem->P();
+}
+
+void PCB::ExitRelease()
+{
+    this->exitsem->V();
+}
+
+int PCB::GetExitCode()
+{
+    return this->exitcode;
+}
+
+void PCB::IncNumWait()
+{
+    this->multex->P();
+	this->numwait++;
+	this->multex->V();
+}
+
+void PCB::JoinRelease()
+{
+    this->joinsem->V();
+}
+
+void PCB::ExitWait()
+{
+    this->exitsem->V();
+}
+
+void PCB::SetExitCode(int ec)
+{
+    this->exitcode = ec;
+}
+
+void PCB::DecNumWait()
+{
+    this->multex->P();
+	this->numwait--;
+	this->multex->V();
+}

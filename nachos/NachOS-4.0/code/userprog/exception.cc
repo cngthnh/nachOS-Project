@@ -738,6 +738,33 @@ void Syscall_Exec()
 	kernel->machine->WriteRegister(OUTPUT_REG, pid);
 }
 
+void Syscall_Join()
+{
+	int id = kernel->machine->ReadRegister(ARG_1);
+	if (id < 0)
+	{
+		DEBUG(dbgFile, "Invalid File ID\n");
+		return;
+	}		
+	int result = pTab->JoinUpdate(id);
+			
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
+}
+
+void Syscall_Exit()
+{
+	int exitStatus = machine->ReadRegister(ARG_1);
+	if(exitStatus != 0)
+	{
+		return;
+	}			
+	int result = pTab->ExitUpdate(exitStatus);
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
+	currentThread->FreeSpace();
+	currentThread->Finish();
+	return; 
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
@@ -759,7 +786,7 @@ ExceptionHandler(ExceptionType which)
 
 		case SC_Exit:
 		{
-			// needs definition
+			Syscall_Exit();
 			IncreasePC();
 			break;
 		}
@@ -858,6 +885,13 @@ ExceptionHandler(ExceptionType which)
 		case SC_Exec:
 		{
 			Syscall_Exec();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Join:
+		{
+			Syscall_Join();
 			IncreasePC();
 			break;
 		}

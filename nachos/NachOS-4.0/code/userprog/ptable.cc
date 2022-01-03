@@ -70,3 +70,58 @@ int PTable::ExecUpdate(char *fileName)
 
     return pid;
 }
+
+int PTable::JoinUpdate(int id)
+{
+    if (id < 0) 
+    {    
+        printf("\nId = %d invalid\n", id);
+		return -1;
+    }
+    if (kernel->currentThread->processID != pcb[id]->parentID){
+        printf("\nId = %d is not it's parent process\n", id);
+        return -1;
+    }
+    pcb[pcb[id]->parentID]->IncNumWait();
+    pcb[id]->JoinWait();
+    int exitCode = pcb[id]->GetExitCode();
+    pcb[id]->ExitRelease();
+	return exitCode;
+}
+
+int PTable::ExitUpdate(int ec)
+{
+    int id = kernel->currentThread->processID;
+	if(id == 0)
+	{	
+		kernel->currentThread->FreeSpace();		
+		kernel->interrupt->Halt();
+        return 0;
+	}
+    if (IsExist(id)==false)
+    {
+        printf("\nThis %d is not exist\n", id);
+        return -1;
+    }  	
+	pcb[id]->SetExitCode(exitcode);
+	pcb[pcb[id]->parentID]->DecNumWait();
+	pcb[id]->JoinRelease();
+	pcb[id]->ExitWait();
+    Remove(id)
+	
+	return exitcode;
+}
+
+bool PTable::IsExist(int pid)
+{
+    return this->bm->Test(pid);
+}
+
+void PTable::Remove(int pid)
+{
+    this->bm->Clear(pid);
+    if(this->pcb[pid] != 0){
+        delete this->pcb[pid];
+        this->pcb[pid] = NULL;
+    }
+}
