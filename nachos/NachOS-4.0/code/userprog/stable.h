@@ -5,7 +5,7 @@
 #define MAX_LOCK 10 
 class STable { 
     private: 
-        BitMap* bm; 
+        Bitmap* bm; 
         Lock* lockTab[MAX_LOCK]; 
     public: 
         STable(); 
