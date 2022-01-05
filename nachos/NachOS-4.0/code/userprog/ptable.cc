@@ -103,13 +103,13 @@ int PTable::ExitUpdate(int ec)
         printf("\nThis %d is not exist\n", id);
         return -1;
     }  	
-	pcb[id]->SetExitCode(exitcode);
+	pcb[id]->SetExitCode(ec);
 	pcb[pcb[id]->parentID]->DecNumWait();
 	pcb[id]->JoinRelease();
 	pcb[id]->ExitWait();
     Remove(id)
 	
-	return exitcode;
+	return ec;
 }
 
 bool PTable::IsExist(int pid)

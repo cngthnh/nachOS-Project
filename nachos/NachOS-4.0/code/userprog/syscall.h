@@ -41,6 +41,9 @@
 #define SC_ReadChar 20
 #define SC_PrintChar 21
 #define SC_RandomNum 22
+#define SC_CreateSemaphore 23
+#define SC_Up 24
+#define SC_Down 25
 
 #define SC_Add		42
 
@@ -194,6 +197,10 @@ int ThreadJoin(ThreadId id);
  * Deletes current thread and returns ExitCode to every waiting lokal thread.
  */
 void ThreadExit(int ExitCode);	
+
+int CreateSemaphore(char* name, int semval);
+int Up(char* name);
+int Down(char* name);
 
 #endif /* IN_ASM */
 

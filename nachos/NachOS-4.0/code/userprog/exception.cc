@@ -744,6 +744,7 @@ void Syscall_Join()
 	if (id < 0)
 	{
 		DEBUG(dbgFile, "Invalid File ID\n");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
 		return;
 	}		
 	int result = pTab->JoinUpdate(id);
@@ -753,16 +754,78 @@ void Syscall_Join()
 
 void Syscall_Exit()
 {
-	int exitStatus = machine->ReadRegister(ARG_1);
-	if(exitStatus != 0)
-	{
-		return;
-	}			
+	int exitStatus = kernel->machine->ReadRegister(ARG_1);		
 	int result = pTab->ExitUpdate(exitStatus);
 	kernel->machine->WriteRegister(OUTPUT_REG, result);
-	currentThread->FreeSpace();
-	currentThread->Finish();
-	return; 
+	kernel->currentThread->FreeSpace();
+	kernel->currentThread->Finish();
+}
+
+void Syscall_CreateSemaphore()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	int semval = kernel->machine->ReadRegister(ARG_2);
+
+	char* name = User2System(virtualAddress, FILENAME_MAX_LENGTH);
+    if (name == NULL)
+	{
+        DEBUG(dbgAddr, "Insufficient memory space to load name");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+    }
+	
+	int result = semTab->Create(name, semval);
+	delete[] name;
+
+	if (result == -1)
+	{
+		DEBUG(dbgAddr, "Can't Create Semaphore");
+	}
+
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
+
+}
+
+void Syscall_Up()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	char* name = User2System(virtualAddress, BUFFER_MAX_LENGTH);
+    if (name == NULL || strlen(name) == 0)
+	{
+        DEBUG(dbgAddr, "Insufficient memory space to load name");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+    }
+
+	int result = semTab->Signal(name);
+	delete[] name
+
+	if (result == -1)
+	{
+		DEBUG(dbgAddr, "Semaphore is not exist!");
+	}
+	kernel->machine->WriteRegister(OUTPUT_REG, -1);
+}
+
+void Syscall_Down()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	char* name = User2System(virtualAddress, BUFFER_MAX_LENGTH);
+    if (name == NULL || strlen(name) == 0)
+	{
+        DEBUG(dbgAddr, "Insufficient memory space to load name");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+    }
+
+	int result = semTab->Wait(name);
+	delete[] name
+
+	if (result == -1)
+	{
+		DEBUG(dbgAddr, "Semaphore is not exist!");
+	}
+	kernel->machine->WriteRegister(OUTPUT_REG, -1);
 }
 
 void
@@ -892,6 +955,27 @@ ExceptionHandler(ExceptionType which)
 		case SC_Join:
 		{
 			Syscall_Join();
+			IncreasePC();
+			break;
+		}
+
+		case SC_CreateSemaphore:
+		{
+			Syscall_CreateSemaphore();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Up:
+		{
+			Syscall_Up();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Down:
+		{
+			Syscall_Down();
 			IncreasePC();
 			break;
 		}
