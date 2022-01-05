@@ -4,6 +4,7 @@
 #include "bitmap.h" 
 #include "pcb.h"
 #include "semaphore.h" 
+#include "synch.h"
 #define MAXPROCESS 10
 #define MAX_PROCESS_NAME_LENGTH 32
 

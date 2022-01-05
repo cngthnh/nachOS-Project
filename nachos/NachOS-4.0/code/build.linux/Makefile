@@ -211,7 +211,7 @@ LD = g++
 AS = as
 RM = /bin/rm
 
-INCPATH = -I../network -I../filesys -I../userprog -I../threads -I../machine -I../lib -I-
+INCPATH = -I../network -I../filesys -I../threads -I../userprog -I../machine -I../lib -I-
 
 PROGRAM = nachos
 
@@ -270,9 +270,6 @@ THREAD_H = ../threads/alarm.h\
 	../threads/switch.h\
 	../threads/synch.h\
 	../threads/synchlist.h\
-	../threads/pcb.h\
-	../threads/ptable.h\
-	../threads/stable.h\
 	../threads/thread.h
 
 THREAD_C = ../threads/alarm.cc\
@@ -281,23 +278,26 @@ THREAD_C = ../threads/alarm.cc\
 	../threads/scheduler.cc\
 	../threads/synch.cc\
 	../threads/synchlist.cc\
-	../threads/pcb.cc\
-	../threads/ptable.cc\
-	../threads/stable.cc\
 	../threads/thread.cc
 
-THREAD_O = alarm.o kernel.o main.o scheduler.o synch.o thread.o pcb.o ptable.o stable.o
+THREAD_O = alarm.o kernel.o main.o scheduler.o synch.o thread.o 
 
 USERPROG_H = ../userprog/addrspace.h\
 	../userprog/syscall.h\
 	../userprog/synchconsole.h\
-	../userprog/noff.h
+	../userprog/noff.h\
+	../userprog/pcb.h\
+	../userprog/ptable.h\
+	../userprog/stable.h
 
 USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/exception.cc\
-	../userprog/synchconsole.cc
+	../userprog/synchconsole.cc\
+	../userprog/pcb.cc\
+	../userprog/ptable.cc\
+	../userprog/stable.cc
 
-USERPROG_O = addrspace.o exception.o synchconsole.o 
+USERPROG_O = addrspace.o exception.o synchconsole.o pcb.o ptable.o stable.o
 
 FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\

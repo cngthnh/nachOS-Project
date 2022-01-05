@@ -44,7 +44,7 @@ class STable {
     public: 
         STable(); 
         ~STable(); 
-        int Create(char* name); 
+        int Create(char* name, int init); 
         int Wait(char *name); 
         int Signal(char *name); 
         int FindFreeSlot();

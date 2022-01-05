@@ -1,4 +1,5 @@
 #include "pcb.h"
+#include "main.h"
 PCB::PCB(int id)
 {
     if (id == 0)
@@ -104,9 +105,9 @@ int PCB::GetExitCode()
 
 void PCB::IncNumWait()
 {
-    this->multex->P();
+    this->mutex->P();
 	this->numwait++;
-	this->multex->V();
+	this->mutex->V();
 }
 
 void PCB::JoinRelease()
@@ -126,7 +127,7 @@ void PCB::SetExitCode(int ec)
 
 void PCB::DecNumWait()
 {
-    this->multex->P();
+    this->mutex->P();
 	this->numwait--;
-	this->multex->V();
+	this->mutex->V();
 }

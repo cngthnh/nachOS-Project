@@ -747,7 +747,7 @@ void Syscall_Join()
 		kernel->machine->WriteRegister(OUTPUT_REG, -1);
 		return;
 	}		
-	int result = pTab->JoinUpdate(id);
+	int result = kernel->processTab->JoinUpdate(id);
 			
 	kernel->machine->WriteRegister(OUTPUT_REG, result);
 }
@@ -755,7 +755,7 @@ void Syscall_Join()
 void Syscall_Exit()
 {
 	int exitStatus = kernel->machine->ReadRegister(ARG_1);		
-	int result = pTab->ExitUpdate(exitStatus);
+	int result = kernel->processTab->ExitUpdate(exitStatus);
 	kernel->machine->WriteRegister(OUTPUT_REG, result);
 	kernel->currentThread->FreeSpace();
 	kernel->currentThread->Finish();
@@ -774,7 +774,7 @@ void Syscall_CreateSemaphore()
 		return;
     }
 	
-	int result = semTab->Create(name, semval);
+	int result = kernel->semTab->Create(name, semval);
 	delete[] name;
 
 	if (result == -1)
@@ -797,8 +797,8 @@ void Syscall_Up()
 		return;
     }
 
-	int result = semTab->Signal(name);
-	delete[] name
+	int result = kernel->semTab->Signal(name);
+	delete[] name;
 
 	if (result == -1)
 	{
@@ -818,8 +818,8 @@ void Syscall_Down()
 		return;
     }
 
-	int result = semTab->Wait(name);
-	delete[] name
+	int result = kernel->semTab->Wait(name);
+	delete[] name;
 
 	if (result == -1)
 	{

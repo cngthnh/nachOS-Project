@@ -1,7 +1,7 @@
 #ifndef PCB_H 
 #define PCB_H 
 #include "thread.h"
-#include "synch.h" 
+#include "synch.h"
 class PCB{ 
 private: 
 	Semaphore *joinsem;//semaphore cho quá trình join 

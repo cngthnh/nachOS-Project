@@ -1,4 +1,5 @@
 #include "stable.h"
+#include "main.h"
 
 STable::STable()
 {

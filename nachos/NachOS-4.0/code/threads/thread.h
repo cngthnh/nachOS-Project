@@ -80,10 +80,11 @@ class Thread {
     // THEY MUST be in this position for SWITCH to work.
     int *stackTop;			 // the current stack pointer
     void *machineState[MachineStateSize];  // all registers except for stackTop
-    int processID = 0;
+    
     int exitStatus;
 
   public:
+    int processID = 0;
     Thread(char* debugName);		// initialize a Thread 
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
@@ -92,10 +93,7 @@ class Thread {
 
     // basic thread operations
 
-    void FreeSpace(){
-        if (space != 0)
-            delete space;
-    }
+    void FreeSpace();
 
     void Fork(VoidFunctionPtr func, void *arg); 
     				// Make thread run (*func)(arg)

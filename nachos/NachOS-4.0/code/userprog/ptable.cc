@@ -1,4 +1,5 @@
 #include "ptable.h"
+#include "main.h"
 
 PTable::PTable(int size)
 {
@@ -107,7 +108,7 @@ int PTable::ExitUpdate(int ec)
 	pcb[pcb[id]->parentID]->DecNumWait();
 	pcb[id]->JoinRelease();
 	pcb[id]->ExitWait();
-    Remove(id)
+    Remove(id);
 	
 	return ec;
 }
@@ -124,4 +125,9 @@ void PTable::Remove(int pid)
         delete this->pcb[pid];
         this->pcb[pid] = NULL;
     }
+}
+
+char* PTable::GetFileName(int id)
+{
+    return this->pcb[id]->GetFileName();
 }
