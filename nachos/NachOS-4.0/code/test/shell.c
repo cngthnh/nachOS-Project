@@ -4,8 +4,8 @@ int
 main()
 {
     SpaceId newProc;
-    OpenFileId input = CONSOLE_INPUT;
-    OpenFileId output = CONSOLE_OUTPUT;
+    OpenFileId input = STDIN;
+    OpenFileId output = STDOUT;
     char prompt[2], ch, buffer[60];
     int i;
 

@@ -434,3 +434,23 @@ Thread::SelfTest()
     SimpleThread(0);
 }
 
+void Thread::FreeSpace(){
+    if (space != 0)
+        delete space;
+}
+
+int Thread::GetExitStatus() {
+    return exitStatus;
+}
+
+void Thread::SetExitStatus(int exitStatus) {
+    this->exitStatus = exitStatus;
+}
+
+int Thread::GetProcessID() {
+    return processID;
+}
+
+void Thread::SetProcessID(int processId) {
+    this->processID = processId;
+}

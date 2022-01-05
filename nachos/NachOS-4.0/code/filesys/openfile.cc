@@ -10,13 +10,15 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
-#ifndef FILESYS_STUB
+
 
 #include "copyright.h"
 #include "main.h"
 #include "filehdr.h"
 #include "openfile.h"
 #include "synchdisk.h"
+
+#ifndef FILESYS_STUB
 
 //----------------------------------------------------------------------
 // OpenFile::OpenFile
@@ -31,15 +33,6 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
-    fileType = 0;
-}
-
-OpenFile::OpenFile(int sector, int fileType)
-{
-    hdr = new FileHeader;
-    hdr->FetchFrom(sector);
-    seekPosition = 0;
-    this->fileType = fileType;
 }
 
 //----------------------------------------------------------------------
@@ -88,9 +81,9 @@ OpenFile::Read(char *into, int numBytes)
 }
 
 int
-OpenFile::Write(char *into, int numBytes)
+OpenFile::Write(char *from, int numBytes)
 {
-   int result = WriteAt(into, numBytes, seekPosition);
+   int result = WriteAt(from, numBytes, seekPosition);
    seekPosition += result;
    return result;
 }
@@ -201,5 +194,29 @@ OpenFile::Length()
 { 
     return hdr->FileLength(); 
 }
+#else //FILESYS_STUB
 
-#endif //FILESYS_STUB
+    OpenFile::OpenFile(int f, char* fileName, int fileType) 
+    { 
+        file = f; 
+        currentOffset = 0; 
+        this->fileType = fileType;
+        this->fileName = new char[strlen(fileName)];
+        strncpy(this->fileName, fileName, strlen(fileName));
+    }
+
+    int OpenFile::GetFileType()
+    {
+        return fileType;
+    }
+
+    char* OpenFile::GetFileName()
+    {
+        if (fileName != NULL)
+        {
+            return fileName;
+        }
+        return NULL;
+    }
+
+#endif 

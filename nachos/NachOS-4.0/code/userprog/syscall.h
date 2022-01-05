@@ -126,8 +126,8 @@ typedef int OpenFileId;
  * the console device.
  */
 
-#define CONSOLE_INPUT	0  
-#define CONSOLE_OUTPUT	1  
+#define STDIN	0  
+#define STDOUT	1  
  
 /* Create a Nachos file, with name "name" */
 /* Note: Create does not open the file.   */
@@ -140,7 +140,7 @@ int Remove(char *name);
 /* Open the Nachos file "name", and return an "OpenFileId" that can 
  * be used to read and write to the file.
  */
-OpenFileId Open(char *name);
+OpenFileId Open(char *name, int fileType);
 
 /* Write "size" bytes from "buffer" to the open file. 
  * Return the number of bytes actually read on success.

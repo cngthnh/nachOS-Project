@@ -108,6 +108,10 @@ Kernel::Initialize()
 #endif // FILESYS_STUB
     postOfficeIn = new PostOfficeInput(10);
     postOfficeOut = new PostOfficeOutput(reliability);
+    addrLock = new Semaphore("addrLock", 1);
+    gPhysPageBitMap = new Bitmap(NumPhysPages);
+    processTab = new PTable(MAXPROCESS);
+    semTab = new STable();
 
     interrupt->Enable();
 }

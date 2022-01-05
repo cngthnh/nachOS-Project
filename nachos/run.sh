@@ -61,6 +61,6 @@ fi
 
 echo "Executing $filename"
 echo "-------------------------------------------"
-../build.linux/nachos -f -cp "$filename" "$filename" -x "$filename" $debugFlags
+../build.linux/nachos -x "$filename" $debugFlags
 
 
