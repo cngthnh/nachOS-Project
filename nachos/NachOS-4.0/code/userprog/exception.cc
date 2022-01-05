@@ -786,7 +786,7 @@ void Syscall_CreateSemaphore()
 
 }
 
-void Syscall_Up()
+void Syscall_Signal()
 {
 	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
 	char* name = User2System(virtualAddress, BUFFER_MAX_LENGTH);
@@ -807,7 +807,7 @@ void Syscall_Up()
 	kernel->machine->WriteRegister(OUTPUT_REG, -1);
 }
 
-void Syscall_Down()
+void Syscall_Wait()
 {
 	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
 	char* name = User2System(virtualAddress, BUFFER_MAX_LENGTH);
@@ -966,16 +966,16 @@ ExceptionHandler(ExceptionType which)
 			break;
 		}
 
-		case SC_Up:
+		case SC_Signal:
 		{
-			Syscall_Up();
+			Syscall_Signal();
 			IncreasePC();
 			break;
 		}
 
-		case SC_Down:
+		case SC_Wait:
 		{
-			Syscall_Down();
+			Syscall_Wait();
 			IncreasePC();
 			break;
 		}
