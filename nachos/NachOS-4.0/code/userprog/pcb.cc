@@ -1,5 +1,6 @@
 #include "pcb.h"
 #include "main.h"
+
 PCB::PCB(int id)
 {
     if (id == 0)
@@ -34,26 +35,23 @@ PCB::~PCB()
     }
 }
 
-void StartProcess(void* id)
+void StartProcess(int id)
 {
-    char* fileName = kernel->processTab->GetFileName((*(int*)id));
+    char* fileName = kernel->processTab->GetFileName(id);
 
     AddrSpace *space;
-    space = new AddrSpace(fileName);
-
+    space = new AddrSpace();
 	if(space == NULL)
 	{
 		printf("\nPCB::Exec : Can't create AddSpace.");
 		return;
 	}
-
-    kernel->currentThread->space = space;
-
-    space->InitRegisters();		
-    space->RestoreState();		
-
-    kernel->machine->Run();		
+    if (space->Load(fileName)) {
+        space->Execute();
+        ASSERTNOTREACHED();
+    }
     ASSERT(FALSE);
+    
 }
 
 int PCB::Exec(char* filename, int id)
@@ -70,7 +68,7 @@ int PCB::Exec(char* filename, int id)
 
 	this->thread->SetProcessID(id);
 	this->parentID = kernel->currentThread->GetProcessID();
- 	this->thread->Fork(StartProcess, &id);
+ 	this->thread->Fork((VoidFunctionPtr)&StartProcess, (void*)id);
 
     mutex->V();
 	return id;
@@ -128,6 +126,7 @@ void PCB::SetExitCode(int ec)
 void PCB::DecNumWait()
 {
     this->mutex->P();
-	this->numwait--;
+	if (numwait > 0)
+        --numwait;
 	this->mutex->V();
 }

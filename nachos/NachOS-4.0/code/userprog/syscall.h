@@ -83,6 +83,10 @@ int RandomNum();
 
 int Add(int op1, int op2);
 
+int CreateSemaphore(char* name, int semval);
+int Signal(char* name);
+int Wait(char* name);
+
 /* Address space control operations: Exit, Exec, Execv, and Join */
 
 /* This user program is done (status = 0 means exited normally). */

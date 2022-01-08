@@ -50,6 +50,12 @@ int PTable::ExecUpdate(char *fileName)
         return -1;
     }
 
+    if (strcmp(fileName, pcb[0]->GetFileName()) == 0) {
+        printf("\nPTable::ExecUpdate : Can't execute main process");
+        bmsem->V();
+        return -1;
+    }
+
     int newProcessIndex = this->GetFreeSlot();
     if (newProcessIndex < 0)
     {
@@ -57,7 +63,7 @@ int PTable::ExecUpdate(char *fileName)
         bmsem->V();
         return -1;
     }
-
+    
     pcb[newProcessIndex] = new PCB(newProcessIndex);
     pcb[newProcessIndex]->SetFileName(fileName);
     pcb[newProcessIndex]->parentID = kernel->currentThread->GetProcessID();

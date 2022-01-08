@@ -1,14 +1,14 @@
 #include "syscall.h"
 
 
-void main()
+int main()
 {
-	int pingPID, pongPID;
-	PrintString("Ping-Pong test starting...\n\n");
-	pingPID = Exec("ping");
-	pongPID = Exec("pong");
-	Join(pingPID);
-	Join(pongPID);
-    PrintString("Ping-Pong test endding...\n\n");
-    Halt();
+	int pingId, pongId;
+    PrintString("Start\n");
+    pingId = Exec("ping");
+    pongId = Exec("pong");
+    Join(pingId);
+    Join(pongId);
+    PrintString("Finish!");
+    Exit(0);
 }

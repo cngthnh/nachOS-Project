@@ -709,7 +709,6 @@ void Syscall_Exec()
 {
 	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
 	char *name = User2System(virtualAddress, FILENAME_MAX_LENGTH);
-
 	if (name == NULL) 
 	{
 		DEBUG(dbgAddr, "Insufficient memory space to load filename");
