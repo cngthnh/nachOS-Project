@@ -6,11 +6,14 @@ PTable::PTable(int size)
     if (size < 0)
         return;
 
+    if (size > MAXPROCESS)
+        size = MAXPROCESS;
+
     psize = size;
     bm = new Bitmap(size);
     bmsem = new Semaphore("bmsem",1);
 
-    for (int i=0; i < MAXPROCESS; ++i) {
+    for (int i=0; i < psize; ++i) {
 		pcb[i] = NULL;
     }
 
@@ -25,6 +28,11 @@ PTable::PTable(int size)
         pcb[newProcessIndex]->SetFileName(""); // first program to run on nachOS
         pcb[newProcessIndex]->parentID = -1;
     }
+}
+
+PTable::~PTable() {
+    if (bm != NULL) delete bm;
+    if (bmsem != NULL) delete bmsem;
 }
 
 int PTable::GetFreeSlot()
