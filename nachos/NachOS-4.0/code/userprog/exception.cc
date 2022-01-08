@@ -518,7 +518,7 @@ void Syscall_Close()
 	if (fileId >= 0 && fileId < MAX_FILE_NUM)
 	{
 		// If the file is already opened
-		if (kernel->fileSystem->FreeUpFileSpace(fileId) != NULL)
+		if (kernel->fileSystem->FreeUpFileSpace(fileId))
 		{
 			kernel->machine->WriteRegister(OUTPUT_REG, 0);
 			DEBUG(dbgFile, "File closed successfully!\n");
@@ -534,7 +534,6 @@ void Syscall_Read()
 	// user space buffer address
 	int bufferAddress = kernel->machine->ReadRegister(ARG_1);
 	int charCount = kernel->machine->ReadRegister(ARG_2);
-	charCount--;
 	OpenFileId fileId = kernel->machine->ReadRegister(ARG_3);
 	switch (fileId) 
 	{
@@ -638,7 +637,7 @@ void Syscall_Write()
 		case 1:
 		{
 			// system space buffer
-			char *buffer = User2System(bufferAddress, charCount); // for terminating
+			char *buffer = User2System(bufferAddress, charCount);
 			char key;
 
 			// Get chars from console and then append it to the buffer in the system space
@@ -665,7 +664,7 @@ void Syscall_Write()
 		{
 			if (fileId > 1 && fileId < MAX_FILE_NUM) 
 			{
-				char *buffer = User2System(bufferAddress, charCount); // for terminating
+				char *buffer = User2System(bufferAddress, charCount);
 
 				OpenFile* currentFile = kernel->fileSystem->GetFileSpace(fileId);
 
