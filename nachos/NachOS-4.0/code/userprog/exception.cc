@@ -802,7 +802,7 @@ void Syscall_Signal()
 	{
 		DEBUG(dbgAddr, "Semaphore is not exist!");
 	}
-	kernel->machine->WriteRegister(OUTPUT_REG, -1);
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
 }
 
 void Syscall_Wait()
@@ -823,7 +823,7 @@ void Syscall_Wait()
 	{
 		DEBUG(dbgAddr, "Semaphore is not exist!");
 	}
-	kernel->machine->WriteRegister(OUTPUT_REG, -1);
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
 }
 
 void
