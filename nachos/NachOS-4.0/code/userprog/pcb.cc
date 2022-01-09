@@ -40,15 +40,17 @@ void StartProcess(int id)
     char* fileName = kernel->processTab->GetFileName(id);
 
     AddrSpace *space;
-    space = new AddrSpace(fileName);
+    space = new AddrSpace();
 	if(space == NULL)
 	{
 		printf("\nPCB::Exec : Can't create AddSpace.");
 		return;
 	}
+    if (space->Load(fileName))
+    {
+        space->Execute();
+    }
     
-    space->Execute();
-
     ASSERT(FALSE);
     
 }

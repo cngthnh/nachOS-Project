@@ -170,6 +170,14 @@ Seek:
 	j	$31
 	.end Seek
 
+	.globl GetProcessID
+	.ent	GetProcessID
+GetProcessID:
+	addiu $2,$0,SC_GetProcessID
+	syscall
+	j	$31
+	.end GetProcessID
+
         .globl ThreadFork
         .ent    ThreadFork
 ThreadFork:

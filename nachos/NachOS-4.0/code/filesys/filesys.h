@@ -73,6 +73,8 @@ class FileSystem {
 
 	OpenFile* AssignFileSpace(int index, char* filename, int fileType);
 
+	int GetFileSpaceID(char* filename);
+
 	bool FreeUpFileSpace(int index);
 
 	~FileSystem();

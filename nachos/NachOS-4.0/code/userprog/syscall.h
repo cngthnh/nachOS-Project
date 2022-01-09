@@ -44,6 +44,7 @@
 #define SC_CreateSemaphore 23
 #define SC_Signal 24
 #define SC_Wait 25
+#define SC_GetProcessID 26
 
 #define SC_Add		42
 
@@ -202,9 +203,7 @@ int ThreadJoin(ThreadId id);
  */
 void ThreadExit(int ExitCode);	
 
-int CreateSemaphore(char* name, int semval);
-int Signal(char* name);
-int Wait(char* name);
+SpaceId GetProcessID();
 
 #endif /* IN_ASM */
 

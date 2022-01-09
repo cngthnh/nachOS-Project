@@ -95,6 +95,7 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
     Interrupt *interrupt = kernel->interrupt;
     Scheduler *scheduler = kernel->scheduler;
     IntStatus oldLevel;
+    this->processID = (int) arg;
     
     DEBUG(dbgThread, "Forking thread: " << name << " f(a): " << (int) func << " " << arg);
     

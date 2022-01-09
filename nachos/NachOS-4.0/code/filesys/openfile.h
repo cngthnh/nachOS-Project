@@ -60,6 +60,8 @@ class OpenFile {
 	int GetFileType();
 
 	char* GetFileName();
+
+	int Seek(int pos);
     
   private:
   	char* fileName;

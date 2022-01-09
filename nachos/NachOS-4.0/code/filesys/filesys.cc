@@ -429,4 +429,20 @@ FileSystem::Print()
         return NULL;
     }
 
+    int FileSystem::GetFileSpaceID(char* filename)
+    {
+        for (int i=0; i<MAX_FILE_NUM; ++i)
+        {
+            if (openingFile[i] == NULL)
+                continue;
+            char* openName = openingFile[i]->GetFileName();
+            if (openName != NULL && strcmp(openName, filename) == 0)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
 #endif // FILESYS_STUB
