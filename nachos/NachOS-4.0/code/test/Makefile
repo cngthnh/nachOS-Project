@@ -112,7 +112,7 @@ ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt randomNum matmult builtinSort segments createFile inputTest ascii sort shell help ping pong scheduler
+PROGRAMS = add halt randomNum matmult builtinSort segments createFile inputTest ascii sort shell help ping pong scheduler sinhvien voinuoc SvVn
 endif
 
 all: $(PROGRAMS)
@@ -211,6 +211,24 @@ scheduler: scheduler.o start.o
 	$(LD) $(LDFLAGS) start.o scheduler.o -o scheduler.coff
 	$(COFF2NOFF) scheduler.coff scheduler
 
+SvVn.o: SvVn.c
+	$(CC) $(CFLAGS) -c SvVn.c
+SvVn: SvVn.o start.o
+	$(LD) $(LDFLAGS) start.o SvVn.o -o SvVn.coff
+	$(COFF2NOFF) SvVn.coff SvVn
+
+voinuoc.o: voinuoc.c
+	$(CC) $(CFLAGS) -c voinuoc.c
+voinuoc: voinuoc.o start.o
+	$(LD) $(LDFLAGS) start.o voinuoc.o -o voinuoc.coff
+	$(COFF2NOFF) voinuoc.coff voinuoc
+
+sinhvien.o: sinhvien.c
+	$(CC) $(CFLAGS) -c sinhvien.c
+sinhvien: sinhvien.o start.o
+	$(LD) $(LDFLAGS) start.o sinhvien.o -o sinhvien.coff
+	$(COFF2NOFF) sinhvien.coff sinhvien
+	
 clean:
 	$(RM) -f *.o *.ii
 	$(RM) -f *.coff
