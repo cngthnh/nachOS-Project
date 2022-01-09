@@ -21,8 +21,6 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
-// needs to be removed later
-#define FILESYS_STUB
 #include "copyright.h"
 #include "main.h"
 #include "syscall.h"
@@ -833,41 +831,40 @@ void Syscall_GetProcessID()
 void Syscall_Seek()
 {
 
-	int pos = kernel->machine->ReadRegister(4); 
-	int id = kernel->machine->ReadRegister(5);	// Lay id cua file
-	// Kiem tra id cua file truyen vao co nam ngoai bang mo ta file khong
+	int pos = kernel->machine->ReadRegister(ARG_1); 
+	int id = kernel->machine->ReadRegister(ARG_2);	
+	
 	if (id < 0 || id > 14)
 	{
 		printf("\nKhong the seek vi id nam ngoai bang mo ta file.");
-		kernel->machine->WriteRegister(2, -1);
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
 		return;
 	}
-	// Kiem tra file co ton tai khong
+	
 	if (kernel->fileSystem->GetFileSpace(id) == NULL)
 	{
 		printf("\nKhong the seek vi file nay khong ton tai.");
-		kernel->machine->WriteRegister(2, -1);
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
 		return;
 	}
-	// Kiem tra co goi Seek tren console khong
+	
 	if (id == 0 || id == 1)
 	{
 		printf("\nKhong the seek tren file console.");
-		kernel->machine->WriteRegister(2, -1);
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
 		return;
 	}
-	// Neu pos = -1 thi gan pos = Length nguoc lai thi giu nguyen pos
+	
 	pos = (pos == -1) ? kernel->fileSystem->GetFileSpace(id)->Length() : pos;
-	if (pos > kernel->fileSystem->GetFileSpace(id)->Length() || pos < 0) // Kiem tra lai vi tri pos co hop le khong
+	if (pos > kernel->fileSystem->GetFileSpace(id)->Length() || pos < 0) 
 	{
 		printf("\nKhong the seek file den vi tri nay.");
-		kernel->machine->WriteRegister(2, -1);
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
 	}
 	else
 	{
-		// Neu hop le thi tra ve vi tri di chuyen thuc su trong file
 		kernel->fileSystem->GetFileSpace(id)->Seek(pos);
-		kernel->machine->WriteRegister(2, pos);
+		kernel->machine->WriteRegister(OUTPUT_REG, pos);
 	}
 }
 
