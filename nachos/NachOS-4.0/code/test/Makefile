@@ -112,7 +112,7 @@ ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt randomNum matmult builtinSort segments createFile inputTest ascii sort shell help
+PROGRAMS = add halt randomNum matmult builtinSort segments createFile inputTest ascii sort shell help ping pong scheduler rotnuoc testfile
 endif
 
 all: $(PROGRAMS)
@@ -192,6 +192,36 @@ help.o: help.c
 help: help.o start.o
 	$(LD) $(LDFLAGS) start.o help.o -o help.coff
 	$(COFF2NOFF) help.coff help
+
+ping.o: ping.c
+	$(CC) $(CFLAGS) -c ping.c
+ping: ping.o start.o
+	$(LD) $(LDFLAGS) start.o ping.o -o ping.coff
+	$(COFF2NOFF) ping.coff ping
+
+pong.o: pong.c
+	$(CC) $(CFLAGS) -c pong.c
+pong: pong.o start.o
+	$(LD) $(LDFLAGS) start.o pong.o -o pong.coff
+	$(COFF2NOFF) pong.coff pong
+
+scheduler.o: scheduler.c
+	$(CC) $(CFLAGS) -c scheduler.c
+scheduler: scheduler.o start.o
+	$(LD) $(LDFLAGS) start.o scheduler.o -o scheduler.coff
+	$(COFF2NOFF) scheduler.coff scheduler
+
+rotnuoc.o: rotnuoc.c
+	$(CC) $(CFLAGS) -c rotnuoc.c
+rotnuoc: rotnuoc.o start.o
+	$(LD) $(LDFLAGS) start.o rotnuoc.o -o rotnuoc.coff
+	$(COFF2NOFF) rotnuoc.coff rotnuoc
+
+testfile.o: testfile.c
+	$(CC) $(CFLAGS) -c testfile.c
+testfile: testfile.o start.o
+	$(LD) $(LDFLAGS) start.o testfile.o -o testfile.coff
+	$(COFF2NOFF) testfile.coff testfile
 
 clean:
 	$(RM) -f *.o *.ii

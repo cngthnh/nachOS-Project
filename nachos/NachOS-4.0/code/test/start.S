@@ -90,6 +90,30 @@ Join:
 	j	$31
 	.end Join
 
+	.globl CreateSemaphore
+	.ent	CreateSemaphore
+CreateSemaphore:
+	addiu $2,$0,SC_CreateSemaphore
+	syscall
+	j	$31
+	.end CreateSemaphore
+
+	.globl Signal
+	.ent	Signal
+Signal:
+	addiu $2,$0,SC_Signal
+	syscall
+	j	$31
+	.end Signal
+
+	.globl Wait
+	.ent	Wait
+Wait:
+	addiu $2,$0,SC_Wait
+	syscall
+	j	$31
+	.end Wait
+
 	.globl CreateFile
 	.ent	CreateFile
 CreateFile:
@@ -145,6 +169,14 @@ Seek:
 	syscall
 	j	$31
 	.end Seek
+
+	.globl GetProcessID
+	.ent	GetProcessID
+GetProcessID:
+	addiu $2,$0,SC_GetProcessID
+	syscall
+	j	$31
+	.end GetProcessID
 
         .globl ThreadFork
         .ent    ThreadFork
