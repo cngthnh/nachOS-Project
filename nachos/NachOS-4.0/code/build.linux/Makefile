@@ -191,7 +191,7 @@
 # of "-DSIM_FIX" to the DEFINES.  This should be enabled by default
 # and eventually will not require the symbol definition
 ################################################################
-DEFINES = -DRDATA -DSIM_FIX #-DFILESYS_STUB
+DEFINES = -DRDATA -DSIM_FIX -DFILESYS_STUB
 
 
 #####################################################################
@@ -211,7 +211,7 @@ LD = g++
 AS = as
 RM = /bin/rm
 
-INCPATH = -I../network -I../filesys -I../userprog -I../threads -I../machine -I../lib -I-
+INCPATH = -I../network -I../filesys -I../threads -I../userprog -I../machine -I../lib -I-
 
 PROGRAM = nachos
 
@@ -280,18 +280,24 @@ THREAD_C = ../threads/alarm.cc\
 	../threads/synchlist.cc\
 	../threads/thread.cc
 
-THREAD_O = alarm.o kernel.o main.o scheduler.o synch.o thread.o
+THREAD_O = alarm.o kernel.o main.o scheduler.o synch.o thread.o 
 
 USERPROG_H = ../userprog/addrspace.h\
 	../userprog/syscall.h\
 	../userprog/synchconsole.h\
-	../userprog/noff.h
+	../userprog/noff.h\
+	../userprog/pcb.h\
+	../userprog/ptable.h\
+	../userprog/stable.h
 
 USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/exception.cc\
-	../userprog/synchconsole.cc
+	../userprog/synchconsole.cc\
+	../userprog/pcb.cc\
+	../userprog/ptable.cc\
+	../userprog/stable.cc
 
-USERPROG_O = addrspace.o exception.o synchconsole.o
+USERPROG_O = addrspace.o exception.o synchconsole.o pcb.o ptable.o stable.o
 
 FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\

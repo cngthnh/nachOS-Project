@@ -21,6 +21,8 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+// needs to be removed later
+#define FILESYS_STUB
 #include "copyright.h"
 #include "main.h"
 #include "syscall.h"
@@ -212,7 +214,7 @@ void Syscall_CreateFile()
 		return;
 	}
 	DEBUG(dbgFile, "Filename read successfully\n");
-	if (!kernel->fileSystem->Create(filename, 0))
+	if (!kernel->fileSystem->Create(filename))
 	{
 		DEBUG(dbgFile, "Unexpected error while creating file\n");
 		kernel->machine->WriteRegister(OUTPUT_REG,-1);
@@ -470,6 +472,14 @@ void Syscall_Open()
 		return;
 	}
 
+	if (kernel->fileSystem->GetFileSpace(filename) != NULL)
+	{
+		DEBUG(dbgFile, "File already opened by another program!\n");
+		kernel->machine->WriteRegister(OUTPUT_REG,-1);
+		delete[] filename;
+		return;
+	}
+
 	int fileSpace = kernel->fileSystem->GetFileSpace();
 	
 	if (fileSpace == -1) 
@@ -505,10 +515,10 @@ void Syscall_Open()
 void Syscall_Close()
 {
 	OpenFileId fileId = kernel->machine->ReadRegister(ARG_1);
-	if (fileId >= 0 && fileId < 10)
+	if (fileId >= 0 && fileId < MAX_FILE_NUM)
 	{
 		// If the file is already opened
-		if (kernel->fileSystem->FreeUpFileSpace(fileId) != NULL)
+		if (kernel->fileSystem->FreeUpFileSpace(fileId))
 		{
 			kernel->machine->WriteRegister(OUTPUT_REG, 0);
 			DEBUG(dbgFile, "File closed successfully!\n");
@@ -517,6 +527,303 @@ void Syscall_Close()
 	}
 	kernel->machine->WriteRegister(OUTPUT_REG, -1);
 	DEBUG(dbgFile, "Invalid File ID or the file hadn't been opened yet!\n");
+}
+
+void Syscall_Read()
+{
+	// user space buffer address
+	int bufferAddress = kernel->machine->ReadRegister(ARG_1);
+	int charCount = kernel->machine->ReadRegister(ARG_2);
+	OpenFileId fileId = kernel->machine->ReadRegister(ARG_3);
+	switch (fileId) 
+	{
+		// stdin
+		case 0:
+		{
+			// system space buffer
+			char *buffer = new char[charCount + 1]; // for terminating
+			char key;
+
+			int i;
+
+			// Get chars from console and then append it to the buffer in the system space
+			for (i=0; i<charCount; ++i)
+			{
+				key = kernel->synchConsoleIn->GetChar();
+				if (key == 0)
+				{
+					buffer[i]=0; // null-terminated string
+					break;
+				}
+				buffer[i]=key;
+			}
+
+			if (i == charCount)
+			{
+				buffer[i] = 0;
+			}
+
+			if (i < charCount)
+			{
+				delete[] buffer;
+				DEBUG(dbgFile, "Reached EOF\n");
+				kernel->machine->WriteRegister(OUTPUT_REG, -2);
+			}
+
+			System2User(bufferAddress, i, buffer);
+
+			// return the actual size
+			kernel->machine->WriteRegister(OUTPUT_REG, i);
+			delete[] buffer;
+			break;
+		}
+		// stdout
+		case 1:
+		{
+			DEBUG(dbgFile, "stdout can't be read!\n");
+			kernel->machine->WriteRegister(OUTPUT_REG, -1);
+			break;
+		}
+		default:
+		{
+			if (fileId > 1 && fileId < MAX_FILE_NUM) 
+			{
+				char *buffer = new char[charCount + 1]; // for terminating
+				int actuallyRead = kernel->fileSystem->GetFileSpace(fileId)->Read(buffer, charCount);
+
+				if (actuallyRead > 0)
+				{
+					buffer[actuallyRead] = 0;
+
+					System2User(bufferAddress, actuallyRead, buffer);
+
+					// return the actual size
+					kernel->machine->WriteRegister(OUTPUT_REG, actuallyRead);
+					delete[] buffer;
+				}
+
+				else
+				{
+					delete[] buffer;
+					DEBUG(dbgFile, "Reached EOF\n");
+					kernel->machine->WriteRegister(OUTPUT_REG, -2);
+				}
+
+			}
+			else 
+			{
+				DEBUG(dbgFile, "Invalid File ID\n");
+				kernel->machine->WriteRegister(OUTPUT_REG, -1);
+			}
+		}
+	}
+}
+
+void Syscall_Write()
+{
+	int bufferAddress = kernel->machine->ReadRegister(ARG_1);
+	int charCount = kernel->machine->ReadRegister(ARG_2);
+	OpenFileId fileId = kernel->machine->ReadRegister(ARG_3);
+	switch (fileId) 
+	{
+		// stdin
+		case 0:
+		{
+			DEBUG(dbgFile, "stdout can't be written!\n");
+			kernel->machine->WriteRegister(OUTPUT_REG, -1);
+			break;
+		}
+		// stdout
+		case 1:
+		{
+			// system space buffer
+			char *buffer = User2System(bufferAddress, charCount);
+			char key;
+
+			// Get chars from console and then append it to the buffer in the system space
+			if (buffer==NULL)
+			{
+				DEBUG(dbgAddr, "Insufficient system memory\n");
+				SysHalt();
+				return;
+			}
+
+			int idx=0;
+
+			while (buffer[idx] != 0) // not null
+			{
+				kernel->synchConsoleOut->PutChar(buffer[idx++]);
+			}
+
+			// return the actual size
+			kernel->machine->WriteRegister(OUTPUT_REG, idx);
+			delete[] buffer;
+			break;
+		}
+		default:
+		{
+			if (fileId > 1 && fileId < MAX_FILE_NUM) 
+			{
+				char *buffer = User2System(bufferAddress, charCount);
+
+				OpenFile* currentFile = kernel->fileSystem->GetFileSpace(fileId);
+
+				if (currentFile->GetFileType() != 0)
+				{
+					DEBUG(dbgFile, "Read-only files can't be written\n");
+					kernel->machine->WriteRegister(OUTPUT_REG, -1);
+					delete[] buffer;
+					return;
+				}
+
+				int actuallyWrite = currentFile->Write(buffer, charCount);
+
+				if (actuallyWrite > 0)
+				{
+					buffer[actuallyWrite] = 0;
+
+					// return the actual size
+					kernel->machine->WriteRegister(OUTPUT_REG, actuallyWrite);
+					delete[] buffer;
+				}
+
+				else
+				{
+					delete[] buffer;
+					DEBUG(dbgFile, "Reached EOF\n");
+					kernel->machine->WriteRegister(OUTPUT_REG, -2);
+				}
+
+			}
+			else 
+			{
+				DEBUG(dbgFile, "Invalid File ID\n");
+				kernel->machine->WriteRegister(OUTPUT_REG, -1);
+			}
+		}
+	}
+}
+
+void Syscall_Exec()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	char *name = User2System(virtualAddress, FILENAME_MAX_LENGTH);
+	if (name == NULL) 
+	{
+		DEBUG(dbgAddr, "Insufficient memory space to load filename");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}
+
+	OpenFile *openFile = kernel->fileSystem->Open(name);
+	if (openFile == NULL) 
+	{
+		DEBUG(dbgFile, "File can't be opened");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}
+	delete openFile;
+
+	int pid = kernel->processTab->ExecUpdate(name);
+	delete[] name;
+	if (pid < 0)
+	{
+		DEBUG(dbgThread, "Can't start a new process");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}
+
+	kernel->machine->WriteRegister(OUTPUT_REG, pid);
+}
+
+void Syscall_Join()
+{
+	int id = kernel->machine->ReadRegister(ARG_1);
+	if (id < 0)
+	{
+		DEBUG(dbgFile, "Invalid File ID\n");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+	}		
+	int result = kernel->processTab->JoinUpdate(id);
+			
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
+}
+
+void Syscall_Exit()
+{
+	int exitStatus = kernel->machine->ReadRegister(ARG_1);		
+	int result = kernel->processTab->ExitUpdate(exitStatus);
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
+	kernel->currentThread->FreeSpace();
+	kernel->currentThread->Finish();
+}
+
+void Syscall_CreateSemaphore()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	int semval = kernel->machine->ReadRegister(ARG_2);
+
+	char* name = User2System(virtualAddress, FILENAME_MAX_LENGTH);
+    if (name == NULL)
+	{
+        DEBUG(dbgAddr, "Insufficient memory space to load name");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+    }
+	
+	int result = kernel->semTab->Create(name, semval);
+	delete[] name;
+
+	if (result == -1)
+	{
+		DEBUG(dbgAddr, "Can't Create Semaphore");
+	}
+
+	kernel->machine->WriteRegister(OUTPUT_REG, result);
+
+}
+
+void Syscall_Signal()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	char* name = User2System(virtualAddress, BUFFER_MAX_LENGTH);
+    if (name == NULL || strlen(name) == 0)
+	{
+        DEBUG(dbgAddr, "Insufficient memory space to load name");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+    }
+
+	int result = kernel->semTab->Signal(name);
+	delete[] name;
+
+	if (result == -1)
+	{
+		DEBUG(dbgAddr, "Semaphore is not exist!");
+	}
+	kernel->machine->WriteRegister(OUTPUT_REG, -1);
+}
+
+void Syscall_Wait()
+{
+	int virtualAddress = kernel->machine->ReadRegister(ARG_1);
+	char* name = User2System(virtualAddress, BUFFER_MAX_LENGTH);
+    if (name == NULL || strlen(name) == 0)
+	{
+        DEBUG(dbgAddr, "Insufficient memory space to load name");
+		kernel->machine->WriteRegister(OUTPUT_REG, -1);
+		return;
+    }
+
+	int result = kernel->semTab->Wait(name);
+	delete[] name;
+
+	if (result == -1)
+	{
+		DEBUG(dbgAddr, "Semaphore is not exist!");
+	}
+	kernel->machine->WriteRegister(OUTPUT_REG, -1);
 }
 
 void
@@ -540,7 +847,7 @@ ExceptionHandler(ExceptionType which)
 
 		case SC_Exit:
 		{
-			// needs definition
+			Syscall_Exit();
 			IncreasePC();
 			break;
 		}
@@ -618,6 +925,55 @@ ExceptionHandler(ExceptionType which)
 		case SC_Close:
 		{
 			Syscall_Close();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Read:
+		{
+			Syscall_Read();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Write:
+		{
+			Syscall_Write();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Exec:
+		{
+			Syscall_Exec();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Join:
+		{
+			Syscall_Join();
+			IncreasePC();
+			break;
+		}
+
+		case SC_CreateSemaphore:
+		{
+			Syscall_CreateSemaphore();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Signal:
+		{
+			Syscall_Signal();
+			IncreasePC();
+			break;
+		}
+
+		case SC_Wait:
+		{
+			Syscall_Wait();
 			IncreasePC();
 			break;
 		}

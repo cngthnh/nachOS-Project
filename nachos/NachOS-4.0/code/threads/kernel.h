@@ -18,6 +18,9 @@
 #include "alarm.h"
 #include "filesys.h"
 #include "machine.h"
+#include "ptable.h"
+#include "stable.h"
+#include "bitmap.h"
 
 class PostOfficeInput;
 class PostOfficeOutput;
@@ -56,6 +59,10 @@ class Kernel {
     FileSystem *fileSystem;     
     PostOfficeInput *postOfficeIn;
     PostOfficeOutput *postOfficeOut;
+    Semaphore *addrLock;
+    Bitmap *gPhysPageBitMap;
+    PTable *processTab;
+    STable *semTab;
 
     int hostName;               // machine identifier
 
